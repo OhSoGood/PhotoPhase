@@ -1,0 +1,50 @@
+# keep source file and line number
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
+
+#keep preference's classes
+-keep public class * extends android.preference.PreferenceFragment {
+    public <init>(...);
+}
+-keep public class * extends android.preference.Preference {
+    public <init>(...);
+}
+
+# keep effects, transitions and borders classes public
+-keep,includedescriptorclasses public class com.ruesga.android.wallpapers.photophase.effects.* {
+    public <init>(...);
+}
+-keep,includedescriptorclasses public class com.ruesga.android.wallpapers.photophase.borders.* {
+    public <init>(...);
+}
+-keep,includedescriptorclasses public class com.ruesga.android.wallpapers.photophase.transitions.* {
+    public <init>(...);
+}
+
+# keep native methods
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}
+
+# keep jackson
+-keepattributes *Annotation*, EnclosingMethod, Signature
+-keepclasseswithmembernames,includedescriptorclasses class org.codehaus.** { *; }
+-keepclassmembers public final enum org.codehaus.jackson.annotate.JsonAutoDetect$Visibility {
+    public static final org.codehaus.jackson.annotate.JsonAutoDetect$Visibility *;
+}
+
+# keep chromecast-java-api
+-keep class su.litvak.chromecast.api.v2.** { *; }
+
+# don't warn okio
+-dontwarn okio.**
+
+# don't warn slf4j
+-dontwarn org.slf4j.**
+
+# don't warn jackson
+-dontwarn org.codehaus.jackson.**
+
+# Dont warn about missing setLatestEventInfo
+-dontwarn android.support.v4.app.NotificationCompatBase
+-dontwarn android.support.v4.app.NotificationCompatGingerbread

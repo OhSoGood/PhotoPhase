@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2015 Jorge Ruesga
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+ -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="PhotoPhaseTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryDark">@color/color_primary_dark</item>
+        <item name="colorAccent">@color/color_accent</item>
+        <item name="toolbarStyle">@style/PhotoPhaseTheme.Toolbar</item>
+    </style>
+
+    <style name="PhotoPhaseTheme" parent="PhotoPhaseTheme.Base" />
+
+    <style name="PhotoPhaseTheme.Overlay" parent="PhotoPhaseTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/black_transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.FullScreen" parent="PhotoPhaseTheme.Base">
+        <item name="colorPrimary">@android:color/background_dark</item>
+        <item name="android:windowBackground">@android:color/background_dark</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Toolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="navigationIcon">?attr/homeAsUpIndicator</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.TextAppearance">
+        <item name="android:textColor">@color/text_color</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.TextAppearance.Primary">
+        <item name="android:textSize">@dimen/primary_text_size</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.TextAppearance.Secondary">
+        <item name="android:textSize">@dimen/secondary_text_size</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Card">
+        <item name="android:background">@drawable/card</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Notification">
+        <item name="android:minWidth">@dimen/notification_min_width</item>
+        <item name="android:minHeight">@dimen/notification_min_height</item>
+        <item name="android:padding">@dimen/notification_padding</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_notification</item>
+        <item name="android:textSize">@dimen/notification_text_size</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/notification_text_color</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Album" parent="@style/PhotoPhaseTheme.Card">
+    </style>
+
+    <style name="PhotoPhaseTheme.Album.MenuBar">
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Album.MenuBar.Overflow">
+        <item name="android:src">@drawable/ic_overflow</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Album.Thumbnail">
+        <item name="android:background">@color/album_thumbnail_color</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.Album.Info">
+        <item name="android:background">@null</item>
+        <item name="android:layout_marginTop">@dimen/default_margin</item>
+        <item name="android:layout_marginLeft">@dimen/small_margin</item>
+        <item name="android:layout_marginRight">@dimen/default_margin</item>
+        <item name="android:layout_marginBottom">@dimen/default_margin</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.PictureCheckBox" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="colorControlActivated">@android:color/white</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.PhotoViewer">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.PhotoViewer.Title">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">@dimen/photoviewer_title_text_size</item>
+    </style>
+
+    <style name="PhotoPhaseTheme.PhotoViewer.Detail">
+        <item name="android:textColor">@color/photoviewer_details_color</item>
+        <item name="android:textSize">@dimen/photoviewer_detail_text_size</item>
+    </style>
+
+</resources>

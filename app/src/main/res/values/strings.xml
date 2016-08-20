@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2015 Jorge Ruesga
+     Copyright (C) 2014 The CyanogenMod Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+ -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- The application name -->
+    <string name="app_name" translatable="false">PhotoPhase</string>
+    <!-- The app description -->
+    <string name="app_description">PhotoPhase Live Wallpaper</string>
+    <!-- The app legal stuff -->
+    <string name="app_legal">Copyright \u00A9 <xliff:g id="year">%1$s</xliff:g> Jorge Ruesga</string>
+
+    <!-- No images message -->
+    <string name="no_pictures_oops_msg">No pictures found</string>
+    <string name="no_pictures_permission_required_msg">Permission required. Tap here.</string>
+
+    <!-- No albums message -->
+    <string name="no_pictures_albums_found_msg">No albums found</string>
+    <string name="no_pictures_albums_tap_to_refresh_msg">Tap to refresh</string>
+    <string name="no_pictures_albums_not_granted_permission_msg">No granted permission</string>
+    <string name="no_pictures_albums_tap_to_request_permission_msg">Tap to request permission</string>
+
+    <!-- Menus -->
+    <string name="mnu_ok" translatable="false">@android:string/ok</string>
+    <string name="mnu_restore">Restore</string>
+    <string name="mnu_delete">Delete</string>
+    <string name="mnu_save">Save</string>
+    <string name="mnu_select_all">Select all</string>
+    <string name="mnu_deselect_all">Deselect all</string>
+    <string name="mnu_invert">Invert</string>
+    <string name="mnu_select_album">Select album</string>
+    <string name="mnu_deselect_album">Deselect album</string>
+    <string name="mnu_details">Details</string>
+    <string name="mnu_share">Share</string>
+    <string name="mnu_cast">Cast</string>
+    <string name="mnu_enqueue">Enqueue</string>
+
+    <!-- Formats -->
+    <string name="format_disabled">Disabled</string>
+    <string name="format_rotate_only">On rotation</string>
+    <string name="format_seconds">%s sec.</string>
+    <string name="format_minutes">%s min.</string>
+    <string name="format_hours">%s h.</string>
+    <string name="format_days">%s d.</string>
+    <string name="format_dim">%s%%</string>
+
+    <!-- Preferences -->
+    <string name="pref_general">General</string>
+    <string name="pref_general_summary">General settings, effects and transitions</string>
+    <string name="pref_general_app_shortcut_title">App shortcut</string>
+    <string name="pref_general_app_shortcut_summary">Display a PhotoPhase shortcut in your Launcher\'s drawer</string>
+    <string name="pref_general_set_wallpaper">Set as wallpaper</string>
+    <string name="pref_general_settings">Settings</string>
+    <string name="pref_general_settings_wallpaper_dim">Wallpaper dim</string>
+    <string name="pref_general_settings_background_color">Background color</string>
+    <string name="pref_general_settings_background_color_summary">Set the background color</string>
+    <string name="pref_general_power_of_two">Power of two</string>
+    <string name="pref_general_power_of_two_summary">By converting the picture to a power of two texture, the graphics pipeline can take advantage of more optimizations and be more efficient using its resources,
+        but, in the other side, it will create a square texture, so depending on your disposition layout some pictures could be appear stretched, ignoring any aspect ratio correction.</string>
+    <string name="pref_general_aspect_ratio_correction">Aspect ratio</string>
+    <string name="pref_general_aspect_ratio_correction_summary">Try to fix the picture\'s aspect ratio by cropping it to fit the destination frame</string>
+    <string name="pref_general_frame_spacer">Frame spacer</string>
+    <string name="pref_general_frame_spacer_summary">Add a bit of separation between frames</string>
+
+    <string name="pref_general_touch">Touch</string>
+    <string name="pref_general_touch_mode">Touch mode</string>
+    <string name="pref_general_touch_mode_on">Fired in double tap</string>
+    <string name="pref_general_touch_mode_off">Fired in single tap</string>
+    <string name="pref_general_touch_action">Touch action</string>
+    <string name="pref_general_touch_action_summary_format"><xliff:g id="action_summary">%1$s</xliff:g> when touching a frame</string>
+    <string name="pref_general_touch_open_with">Open with</string>
+    <string name="pref_general_touch_open_with_summary_on">Internal photo viewer</string>
+    <string name="pref_general_touch_open_with_summary_off">External photo viewer</string>
+
+    <string name="pref_general_transitions">Transitions</string>
+    <string name="pref_general_transitions_types">Types</string>
+    <string name="pref_general_transitions_types_summary_format"><xliff:g id="selected">%1$d</xliff:g> of <xliff:g id="total">%2$d</xliff:g> types selected</string>
+    <string name="pref_general_transitions_interval">Interval</string>
+    <string name="pref_general_effects">Effects</string>
+    <string name="pref_general_effects_types">Types</string>
+    <string name="pref_general_effects_types_summary_format"><xliff:g id="selected">%1$d</xliff:g> of <xliff:g id="total">%2$d</xliff:g> image effects selected</string>
+    <string name="pref_general_borders">Borders</string>
+    <string name="pref_general_border_color">Color</string>
+    <string name="pref_general_border_color_summary">Set the border color</string>
+    <string name="pref_general_borders_types">Types</string>
+    <string name="pref_general_borders_types_summary_format"><xliff:g id="selected">%1$d</xliff:g> of <xliff:g id="total">%2$d</xliff:g> image borders selected</string>
+    <string name="pref_general_live_preview">Live preview</string>
+
+    <string name="pref_media">Media</string>
+    <string name="pref_media_summary">Albums to be displayed, refresh interval, and other media settings</string>
+    <string name="pref_media_settings">Settings</string>
+    <string name="pref_media_settings_refresh_interval">Refresh interval</string>
+    <string name="pref_media_settings_refresh_interval_disable">Searching for new pictures is disabled</string>
+    <string name="pref_media_settings_refresh_interval_summary">Search for new pictures every <xliff:g id="interval">%1$s</xliff:g></string>
+    <string name="pref_media_settings_refresh_now">Refresh now</string>
+    <string name="pref_media_settings_refresh_now_summary">Manually refresh the picture database</string>
+    <string name="pref_media_random_title">Show images randomly</string>
+    <string name="pref_media_random_summary_on">Images are displayed in a randomly sequence</string>
+    <string name="pref_media_random_summary_off">Images are displayed in a sequential way</string>
+    <string name="pref_media_pictures">Pictures</string>
+    <string name="pref_media_albums">Albums</string>
+    <string name="pref_media_albums_summary">Set the albums and pictures that will be displayed on the wallpaper</string>
+    <string name="pref_media_auto_select_new">Auto select albums</string>
+    <string name="pref_media_auto_select_new_summary">Automatically select new albums when media discovery occurs</string>
+    <string name="pref_media_album_not_exists">Album not exists</string>
+
+    <string name="pref_layout">Layout</string>
+    <string name="pref_layout_summary">Positioning of pictures on the screen</string>
+    <string name="pref_layout_disposition">Arrangement</string>
+    <string name="pref_random_dispositions">Random</string>
+    <string name="pref_random_dispositions_summary">Generate random arrangements at a chosen interval</string>
+    <string name="pref_random_dispositions_interval">Interval</string>
+    <string name="pref_disposition_portrait">Portrait arrangement</string>
+    <string name="pref_disposition_landscape">Landscape arrangement</string>
+    <plurals name="pref_disposition_summary_format">
+        <item quantity="one">1 image is shown in <xliff:g id="orientation">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count">%1$d</xliff:g> images are shown in <xliff:g id="orientation">%2$s</xliff:g></item>
+    </plurals>
+    <string name="disposition_orientation_portrait">portrait orientation</string>
+    <string name="disposition_orientation_landscape">landscape orientation</string>
+
+    <string name="pref_cast">Cast</string>
+    <string name="pref_cast_summary">Photo cast settings</string>
+    <string name="pref_cast_discovery_title">Discovery</string>
+    <string name="pref_cast_enable_title">Enabled</string>
+    <string name="pref_cast_autoconnect_title">Auto-connect</string>
+    <string name="pref_cast_autoconnect_summary">Try to connect to the last connected device without ask to choose a device</string>
+    <string name="pref_cast_last_connected_device_title">Last connected device</string>
+    <string name="pref_cast_no_connected_device">No device connected</string>
+    <string name="pref_cast_clear_connected_device">Forget last connected device?</string>
+    <string name="pref_cast_connected_device" translatable="false"><xliff:g id="name">%1$s</xliff:g>\n<xliff:g id="address">%2$s</xliff:g></string>
+    <string name="pref_cast_discovery_time_title">Discovery time</string>
+    <string name="pref_cast_slideshow_title">Slideshow</string>
+    <string name="pref_cast_slideshow_time_title">Time</string>
+    <string name="pref_cast_slideshow_time_summary">The elapsed time between photo transitions</string>
+    <string name="pref_cast_slideshow_repeat_title">Repeat</string>
+    <string name="pref_cast_slideshow_shuffle_title">Shuffle</string>
+    <string name="pref_cast_visualization_title">Visualization</string>
+    <string name="pref_cast_full_quality_title">Full quality</string>
+    <string name="pref_cast_full_quality_summary_on">Photos will be shown in the highest quality. Load times will increase as picture quality increases.</string>
+    <string name="pref_cast_full_quality_summary_off">Photos will be compressed in order to gain better load times.</string>
+    <string name="pref_cast_aspect_ratio_title">Aspect ratio</string>
+    <string name="pref_cast_aspect_ratio_summary_on">Keep aspect ratio</string>
+    <string name="pref_cast_aspect_ratio_summary_off">Stretch to fit on screen</string>
+    <string name="pref_cast_blurred_background_title">Blurred background</string>
+    <string name="pref_cast_blurred_background_summary">Fill background with a blurred effect of the same photo whenever it doesn\'t cover all the screen</string>
+    <string name="pref_cast_ui_title">User interface</string>
+    <string name="pref_cast_show_time_title">Show time</string>
+    <string name="pref_cast_show_weather_title">Show weather</string>
+    <string name="pref_cast_show_logo_title">Show logo</string>
+    <string name="pref_cast_show_track_title">Show track info</string>
+
+
+    <!-- [2 lines one for describe long tap and another for describe swipe] -->
+    <string name="pref_disposition_description">Long tap a frame and drag \u0026 drop its borders. Swipe left and right to show defined templates</string>
+    <string name="pref_disposition_saved">Saved <xliff:g id="number_of_saved">%1$s</xliff:g> de <xliff:g id="total_of_saved">%2$s</xliff:g></string>
+    <string name="pref_disposition_template">Template <xliff:g id="number_of_template">%1$s</xliff:g> of <xliff:g id="total_of_templates">%2$s</xliff:g></string>
+    <string name="pref_disposition_unable_delete_advise">Unable to delete the selected frame</string>
+
+    <string name="pref_about">About</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_intervals_disabled">Disabled</string>
+    <string name="refresh_intervals_1h">1 hour</string>
+    <string name="refresh_intervals_4h">4 hours</string>
+    <string name="refresh_intervals_1d">1 day</string>
+    <string name="refresh_intervals_2d">2 days</string>
+    <string name="refresh_intervals_1w">1 week</string>
+
+    <!-- Touch actions -->
+    <string name="touch_actions_none">None</string>
+    <string name="touch_actions_transition">Perform transition</string>
+    <string name="touch_actions_open">Open</string>
+    <string name="touch_actions_share">Share</string>
+    <string name="touch_actions_cast">Cast</string>
+    <string name="touch_actions_none_summary">Do nothing</string>
+    <string name="touch_actions_transition_summary">Perform image transition</string>
+    <string name="touch_actions_open_summary">Open the image</string>
+    <string name="touch_actions_share_summary">Share the image</string>
+    <string name="touch_actions_cast_summary">Cast the image</string>
+
+    <!-- Transitions -->
+    <string name="transitions_cube">Cube</string>
+    <string name="transitions_fade">Fade</string>
+    <string name="transitions_flip">Flip</string>
+    <string name="transitions_swap">Swap</string>
+    <string name="transitions_translation">Translation</string>
+    <string name="transitions_window">Window</string>
+    <string name="transitions_blur">Blur</string>
+    <string name="transitions_vertigo">Vertigo</string>
+    <string name="transitions_mix">Mix</string>
+    <string name="transitions_aperture">Aperture</string>
+
+    <!-- Effects -->
+    <string name="effects_noeffect">Normal</string>
+    <string name="effects_autofix">Autofix</string>
+    <string name="effects_blur">Blur</string>
+    <string name="effects_crossprocess">Cross process</string>
+    <string name="effects_documentary">Documentary</string>
+    <string name="effects_duotone">Duotone</string>
+    <string name="effects_emboss">Emboss</string>
+    <string name="effects_fisheye">Fisheye</string>
+    <string name="effects_glow">Glow</string>
+    <string name="effects_grain">Grain</string>
+    <string name="effects_grayscale">Grayscale</string>
+    <string name="effects_halftone">Halftone</string>
+    <string name="effects_lomoish">Lomo-ish</string>
+    <string name="effects_mirror">Mirror</string>
+    <string name="effects_negative">Negative</string>
+    <string name="effects_outline">Outline</string>
+    <string name="effects_pixelate">Pixelate</string>
+    <string name="effects_popart">Pop art</string>
+    <string name="effects_posterize">Posterize</string>
+    <string name="effects_saturate">Saturate</string>
+    <string name="effects_scanlines">Scanlines</string>
+    <string name="effects_sepia">Sepia</string>
+    <string name="effects_temperature">Temperature</string>
+    <string name="effects_tint">Tint</string>
+    <string name="effects_vignette">Vignette</string>
+    <string name="effects_noise">Noise</string>
+    <string name="effects_frosted">Frosted</string>
+    <string name="effects_crosshatching">Crosshatching</string>
+    <string name="effects_thermalvision">Thermal vision</string>
+    <string name="effects_swirl">Swirl</string>
+    <string name="effects_dof">Deep of field</string>
+    <string name="effects_warhol" translatable="false">Warhol</string>
+
+    <!-- Borders -->
+    <string name="borders_noborder">No border</string>
+    <string name="borders_simple">Simple</string>
+    <string name="borders_rounded">Rounded</string>
+    <string name="borders_rounded_squares">Rounded squares</string>
+    <string name="borders_horizontal_film">Horizontal film</string>
+    <string name="borders_vertical_film">Vertical film</string>
+    <string name="borders_elegant">Elegant</string>
+    <string name="borders_double">Double</string>
+    <string name="borders_double_joined">Double joined</string>
+    <string name="borders_inset">Inset</string>
+    <string name="borders_squares">Squares</string>
+    <string name="borders_inset_squares">Inset squares</string>
+
+    <!-- ColorPickerDialog -->
+    <string name="color_picker_alpha_slider_text">Alpha</string>
+    <string name="color_picker_current_text">Current:</string>
+    <string name="color_picker_new_text">New:</string>
+    <string name="color_picker_color">Color:</string>
+
+    <!-- Photo Viewer Details -->
+    <string name="photoviewer_details_not_available">Not available</string>
+    <string name="photoviewer_details_date">Date</string>
+    <string name="photoviewer_details_format"><xliff:g id="full_date_format" example="Oct, 11 June 2016">%1$s</xliff:g>, <xliff:g id="short_time_format" example="12:23">%2$s</xliff:g></string>
+    <string name="photoviewer_details_location">Location</string>
+    <string name="photoviewer_details_latitude_longitude">Lat. <xliff:g id="latitude" example="44.567">%1$f</xliff:g>; Lon. <xliff:g id="longitude" example="-4.567">%2$f</xliff:g></string>
+    <string name="photoviewer_details_no_map_available">No map available</string>
+    <string name="photoviewer_details_camera">Camera</string>
+    <string name="photoviewer_details_manufacturer">Manufacturer: <xliff:g id="manufacturer" example="Sony">%1$s</xliff:g></string>
+    <string name="photoviewer_details_model">Model: <xliff:g id="model" example="DSC-RX10 III">%1$s</xliff:g></string>
+    <string name="photoviewer_details_exposure">Exposure: 1/<xliff:g id="exposure" example="6704">%1$s</xliff:g></string>
+    <string name="photoviewer_details_aperture">Aperture: f/<xliff:g id="aperture" example="1.7">%1$s</xliff:g></string>
+    <string name="photoviewer_details_iso">ISO: <xliff:g id="iso" example="50">%1$s</xliff:g></string>
+    <string name="photoviewer_details_flash">Flash: <xliff:g id="flash" example="used">%1$s</xliff:g></string>
+    <string name="photoviewer_details_flash_used">Used</string>
+    <string name="photoviewer_details_flash_not_used">Not used</string>
+    <string name="photoviewer_details_info">Info</string>
+    <string name="photoviewer_details_name">Name: <xliff:g id="name" example="myphoto.jpg">%1$s</xliff:g></string>
+    <string name="photoviewer_details_size">Size: <xliff:g id="size" example="234">%1$d</xliff:g> KB</string>
+    <string name="photoviewer_details_resolution">Resolution: <xliff:g id="w" example="1024">%1$d</xliff:g>x<xliff:g id="h" example="678">%2$d</xliff:g></string>
+    <string name="photoviewer_details_orientation">Orientation: <xliff:g id="orientation" example="0">%1$s</xliff:g>\u00B0</string>
+    <string name="photoviewer_details_path">Path: <xliff:g id="path" example="/storage/emulated/0/photos">%1$s</xliff:g></string>
+
+    <!-- Frame settings -->
+    <string name="frame_settings_dialog_title">Frame settings</string>
+    <string name="frame_settings_flag_background">Background</string>
+    <string name="frame_settings_flag_transition">Transition</string>
+    <string name="frame_settings_flag_effect">Effect</string>
+    <string name="frame_settings_flag_border">Border</string>
+
+    <!-- Saved dispositions -->
+    <string name="saved_dispositions_save_success">Successfully saved</string>
+    <string name="saved_dispositions_save_exists">Another disposition with the same layout exists</string>
+    <string name="saved_dispositions_delete_success">Successfully deleted</string>
+
+    <!-- Cast -->
+    <string name="cast_app_description">Cast your photos</string>
+    <string name="cast_loading_msg">Loading</string>
+    <string name="cast_dialog_title">Send to</string>
+    <string name="cast_dialog_sent_to_device">Sent to device <xliff:g id="device">%1$s</xliff:g></string>
+    <string name="cast_dialog_no_devices_found">No devices found</string>
+    <string name="cast_connect_error">Cannot connect to device</string>
+    <string name="cast_resume">Resume</string>
+    <string name="cast_pause">Pause</string>
+    <string name="cast_previous">Previous</string>
+    <string name="cast_next">Next</string>
+    <string name="cast_shuffle">Shuffle</string>
+    <string name="cast_repeat">Repeat</string>
+    <string name="cast_stop">Stop</string>
+</resources>

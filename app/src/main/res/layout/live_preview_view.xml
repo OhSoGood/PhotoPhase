@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2015 Jorge Ruesga
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="8dp"
+                android:paddingStart="8dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                style="@style/TextAppearance.AppCompat.Widget.Switch" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/settings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="end|center_vertical"
+            android:src="@drawable/ic_item_settings"
+            tools:ignore="ContentDescription"/>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@color/black_opaque">
+
+        <com.ruesga.android.wallpapers.photophase.widgets.LivePreviewView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"/>
+
+        <LinearLayout
+            android:id="@+id/settings_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:background="@color/black_opaque"
+            android:visibility="gone">
+
+            <org.adw.library.widgets.discreteseekbar.DiscreteSeekBar
+                xmlns:dsb="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/strength"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.0"
+                dsb:dsb_min="0"
+                dsb:dsb_max="100"
+                dsb:dsb_indicatorPopupEnabled="false"
+                dsb:dsb_indicatorColor="?attr/colorAccent"
+                dsb:dsb_trackColor="?attr/colorAccent"
+                dsb:dsb_progressColor="?attr/colorAccent"/>
+
+            <ImageView
+                android:id="@+id/done"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="3dp"
+                android:src="@drawable/ic_done"
+                tools:ignore="ContentDescription"/>
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>
