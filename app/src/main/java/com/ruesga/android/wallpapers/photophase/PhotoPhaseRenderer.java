@@ -38,15 +38,16 @@ import android.opengl.Matrix;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ruesga.android.wallpapers.photophase.cast.CastService;
+import com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants;
 import com.ruesga.android.wallpapers.photophase.cast.CastUtils;
 import com.ruesga.android.wallpapers.photophase.model.Disposition;
 import com.ruesga.android.wallpapers.photophase.preferences.PreferencesProvider;
 import com.ruesga.android.wallpapers.photophase.preferences.PreferencesProvider.Preferences;
 import com.ruesga.android.wallpapers.photophase.preferences.TouchAction;
-import com.ruesga.android.wallpapers.photophase.providers.TemporaryContentAccessProvider;
 import com.ruesga.android.wallpapers.photophase.shapes.ColorShape;
 import com.ruesga.android.wallpapers.photophase.shapes.OopsShape;
 import com.ruesga.android.wallpapers.photophase.textures.PhotoPhaseTextureManager;
@@ -103,10 +104,13 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
     private int mHeight = -1;
     private int mStatusBarHeight = 0;
     private int mMeasuredHeight  = -1;
+    private boolean mUseWallpaperOffset;
+    private float mOffsetX = -1f;
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mProjMatrix = new float[16];
     private final float[] mVMatrix = new float[16];
+    private float mMVPMatrixOffset;
 
     private final Object mDrawing = new Object();
     private boolean mRecycle;
@@ -121,7 +125,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(PreferencesProvider.ACTION_SETTINGS_CHANGED)) {
+            if (PreferencesProvider.ACTION_SETTINGS_CHANGED.equals(action)) {
                 // Check what flags are been requested
                 boolean recreateWorld = intent.getBooleanExtra(
                         PreferencesProvider.EXTRA_FLAG_RECREATE_WORLD, false);
@@ -134,6 +138,10 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
                         PreferencesProvider.EXTRA_FLAG_MEDIA_INTERVAL_CHANGED, false);
                 int dispositionInterval = intent.getIntExtra(
                         PreferencesProvider.EXTRA_FLAG_DISPOSITION_INTERVAL_CHANGED, -1);
+
+                // Update wallpaper offset
+                mUseWallpaperOffset = PreferencesProvider.Preferences.General
+                        .isWallpaperOffset(context);
 
                 // Empty texture queue?
                 if (emptyTextureQueue) {
@@ -176,7 +184,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
 
                 // Preference could be changed, should disconnect the cast service?
                 handleCastStatusChanged();
-            } else if (action.equals(CastService.ACTION_CONNECTIVITY_CHANGED)) {
+            } else if (CastServiceConstants.ACTION_CONNECTIVITY_CHANGED.equals(action)) {
                 // Have a valid cast connectivity?
                 handleCastStatusChanged();
             }
@@ -258,6 +266,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
         mRecreateWorld = false;
         sInstances++;
         mAlarmManager = (AlarmManager)ctx.getSystemService(Context.ALARM_SERVICE);
+        mUseWallpaperOffset = PreferencesProvider.Preferences.General.isWallpaperOffset(ctx);
     }
 
     /**
@@ -301,9 +310,12 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
         if (DEBUG) Log.d(TAG, "onCreate [" + mInstance + "]");
         // Register a receiver to listen for media reload request
         IntentFilter filter = new IntentFilter();
-        filter.addAction(PreferencesProvider.ACTION_SETTINGS_CHANGED);
-        filter.addAction(CastService.ACTION_CONNECTIVITY_CHANGED);
+        filter.addAction(CastServiceConstants.ACTION_CONNECTIVITY_CHANGED);
         mContext.registerReceiver(mSettingsChangedReceiver, filter);
+
+        filter = new IntentFilter();
+        filter.addAction(PreferencesProvider.ACTION_SETTINGS_CHANGED);
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(mSettingsChangedReceiver, filter);
 
         // Check whether the media scan is active
         int interval = Preferences.Media.getRefreshFrequency(mContext);
@@ -330,6 +342,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
         // Register a receiver to listen for media reload request
         unbindFromCastService();
         mContext.unregisterReceiver(mSettingsChangedReceiver);
+        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mSettingsChangedReceiver);
         recycle();
         if (mEffectContext != null) {
             mEffectContext.release();
@@ -380,6 +393,12 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
         if (!mIsPreview) {
             mHandler.postDelayed(mEGLContextWatchDog, 15000L);
         }
+    }
+
+    @SuppressWarnings("UnusedParameters")
+    public void onOffsetChanged(float x , float y) {
+        mOffsetX = x;
+        mDispatcher.requestRender();
     }
 
     /**
@@ -485,6 +504,16 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
                             Log.w(TAG, "Got a remote exception while casting " + file, e);
                         }
                     }
+                } else if (touchAction.compareTo(TouchAction.SHOW_DETAILS) == 0) {
+                    File file = getFileFromFrame(frame);
+                    if (file != null) {
+                        Intent intent = new Intent(mContext, PhotoViewerActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        intent.putExtra(PhotoViewerActivity.EXTRA_PHOTO, file.getAbsolutePath());
+                        intent.putExtra(PhotoViewerActivity.EXTRA_SHOW_DETAILS_ONLY, true);
+                        mContext.startActivity(intent);
+                    }
                 }
             }
         }
@@ -550,7 +579,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
      */
     private synchronized void deselectCurrentTransition() {
         mHandler.removeCallbacks(mTransitionThread);
-        mWorld.deselectTransition(mMVPMatrix);
+        mWorld.deselectTransition(mMVPMatrix, mMVPMatrixOffset);
         mLastRunningTransition = 0;
     }
 
@@ -842,9 +871,20 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
             mHandler.removeCallbacks(mEGLContextWatchDog);
         }
 
+        // Calculate wallpaper offset
+        int widthOffset = 0;
+        if (!mIsPreview && mUseWallpaperOffset && mOffsetX != -1) {
+            widthOffset = (int) (mWidth / 3f);
+        }
+        mMVPMatrixOffset = (!mIsPreview && mUseWallpaperOffset && mOffsetX != -1)
+                ? -0.5f * mOffsetX : 0.0f;
+
         // Set the projection, view and model
-        GLES20.glViewport(0, -mStatusBarHeight, mWidth, mHeight);
+        GLES20.glViewport(0, -mStatusBarHeight, mWidth + widthOffset, mHeight);
         Matrix.setLookAtM(mVMatrix, 0, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+        if (mMVPMatrixOffset != 0.0f) {
+            Matrix.translateM(mVMatrix, 0, mMVPMatrixOffset, 0.0f, 0.0f);
+        }
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mVMatrix, 0);
 
         if (mTextureManager != null) {
@@ -859,7 +899,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
 
                 if (!mIsPaused && mWorld != null) {
                     // Now draw the world (all the photo frames with effects)
-                    mWorld.draw(mMVPMatrix);
+                    mWorld.draw(mMVPMatrix, mMVPMatrixOffset);
 
                     // Check if we have some pending transition or transition has
                     // exceed its timeout
@@ -886,7 +926,7 @@ public class PhotoPhaseRenderer implements GLSurfaceView.Renderer {
                 } else {
                     if (mWorld != null) {
                         // Just draw the world before notify GLView to goto sleep
-                        mWorld.draw(mMVPMatrix);
+                        mWorld.draw(mMVPMatrix, mMVPMatrixOffset);
                     }
                     mDispatcher.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
                 }

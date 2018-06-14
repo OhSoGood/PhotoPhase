@@ -176,7 +176,15 @@ public class Effects {
         /**
          * @see PhotoPhaseEffectFactory#EFFECT_WARHOL
          */
-        WARHOL(31, null);
+        WARHOL(31, null),
+        /**
+         * @see PhotoPhaseEffectFactory#EFFECT_TOON
+         */
+        TOON(32, null),
+        /**
+         * @see PhotoPhaseEffectFactory#EFFECT_SOBEL
+         */
+        SOBEL(33, null);
 
         public final int mId;
         public final Settings mSettings;
@@ -215,19 +223,17 @@ public class Effects {
      * Method that that release the cached data
      */
     public void release() {
-        if (mCachedEffects != null) {
-            for (Effect effect : mCachedEffects.values()) {
-                try {
-                    effect.release();
-                } catch (NoSuchElementException ex) {
-                    // Catching a runtime exception is not ideally, but releasing
-                    // the effect causes a fc it the effect is not a valid state.
-                    // Since we are releasing the effect we can ignore it to avoid
-                    // crash the app
-                }
+        for (Effect effect : mCachedEffects.values()) {
+            try {
+                effect.release();
+            } catch (NoSuchElementException ex) {
+                // Catching a runtime exception is not ideally, but releasing
+                // the effect causes a fc it the effect is not a valid state.
+                // Since we are releasing the effect we can ignore it to avoid
+                // crash the app
             }
-            mCachedEffects.clear();
         }
+        mCachedEffects.clear();
     }
 
     /**
@@ -394,6 +400,14 @@ public class Effects {
         } else if (nextEffect.compareTo(EFFECTS.WARHOL) == 0) {
             if (EffectFactory.isEffectSupported(PhotoPhaseEffectFactory.EFFECT_WARHOL)) {
                 effect = effectFactory.createEffect(PhotoPhaseEffectFactory.EFFECT_WARHOL);
+            }
+        } else if (nextEffect.compareTo(EFFECTS.TOON) == 0) {
+            if (EffectFactory.isEffectSupported(PhotoPhaseEffectFactory.EFFECT_TOON)) {
+                effect = effectFactory.createEffect(PhotoPhaseEffectFactory.EFFECT_TOON);
+            }
+        } else if (nextEffect.compareTo(EFFECTS.SOBEL) == 0) {
+            if (EffectFactory.isEffectSupported(PhotoPhaseEffectFactory.EFFECT_SOBEL)) {
+                effect = effectFactory.createEffect(PhotoPhaseEffectFactory.EFFECT_SOBEL);
             }
         }
 

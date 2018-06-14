@@ -24,6 +24,7 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ruesga.android.wallpapers.photophase.R;
@@ -39,6 +40,7 @@ public class MediaPreferenceFragment extends PreferenceFragment {
     private static final boolean DEBUG = false;
 
     private ListPreference mRefreshInterval;
+    private SwitchPreference mRememberLastMediaShown;
 
     private boolean mMediaIntevalChangedFlag;
     private boolean mEmptyTextureQueueFlag;
@@ -53,6 +55,12 @@ public class MediaPreferenceFragment extends PreferenceFragment {
                 mMediaIntevalChangedFlag = true;
             } else if (key.compareTo("ui_media_random") == 0) {
                 mEmptyTextureQueueFlag = true;
+
+                boolean random = (Boolean) newValue;
+                if (random) {
+                    mRememberLastMediaShown.setChecked(false);
+                }
+                mRememberLastMediaShown.setEnabled(!random);
             }
             return true;
         }
@@ -73,7 +81,9 @@ public class MediaPreferenceFragment extends PreferenceFragment {
         if (mEmptyTextureQueueFlag) {
             intent.putExtra(PreferencesProvider.EXTRA_FLAG_EMPTY_TEXTURE_QUEUE, Boolean.TRUE);
         }
-        getActivity().sendBroadcast(intent);
+        if (getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+        }
     }
 
     /**
@@ -102,13 +112,23 @@ public class MediaPreferenceFragment extends PreferenceFragment {
                 Intent intent = new Intent(PreferencesProvider.ACTION_SETTINGS_CHANGED);
                 intent.putExtra(PreferencesProvider.EXTRA_FLAG_MEDIA_RELOAD, Boolean.TRUE);
                 intent.putExtra(PreferencesProvider.EXTRA_ACTION_MEDIA_USER_RELOAD_REQUEST, Boolean.TRUE);
-                getActivity().sendBroadcast(intent);
+                if (getActivity() != null) {
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+                }
                 return true;
             }
         });
 
         SwitchPreference random = (SwitchPreference) findPreference("ui_media_random");
         random.setOnPreferenceChangeListener(mOnChangeListener);
+
+        mRememberLastMediaShown
+                = (SwitchPreference) findPreference("ui_media_remember_last_media_show");
+        boolean isRandom = Preferences.Media.isRandomSequence(getActivity());
+        if (isRandom) {
+            mRememberLastMediaShown.setChecked(false);
+        }
+        mRememberLastMediaShown.setEnabled(!isRandom);
     }
 
     /**

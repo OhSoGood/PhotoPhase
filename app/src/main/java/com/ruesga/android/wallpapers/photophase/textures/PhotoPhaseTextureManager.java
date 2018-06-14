@@ -23,6 +23,7 @@ import android.graphics.RectF;
 import android.media.effect.EffectContext;
 import android.opengl.GLES20;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -45,6 +46,7 @@ import com.ruesga.android.wallpapers.photophase.utils.Utils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -79,6 +81,8 @@ public class PhotoPhaseTextureManager extends TextureManager
     // 2 - Error
     private byte mStatus;
 
+    private boolean mFirstLoad = true;
+
     /**
      * A private runnable that will run in the GLThread
      */
@@ -94,7 +98,7 @@ public class PhotoPhaseTextureManager extends TextureManager
         public void run() {
             try {
                 // Load the bitmap and create a fake gles information
-                ti = GLESUtil.loadFadeTexture(mImage, mDimensions);
+                ti = GLESUtil.loadFakeTexture(mImage, mDimensions);
 
                 boolean enqueue;
                 synchronized (mSync) {
@@ -326,7 +330,11 @@ public class PhotoPhaseTextureManager extends TextureManager
         // No images but thread should start here to received partial data
         this.mStatus = 0; // Loading
         if (mBackgroundTask != null) {
-            mBackgroundTask.setAvailableImages(new File[]{});
+            // In order to continue with the last media shown, we need all the
+            // images to process them
+            if (!Preferences.Media.isRememberLastMediaShown(mContext) || mFirstLoad) {
+                mBackgroundTask.setAvailableImages(new File[]{});
+            }
             if (!mBackgroundTask.mRun) {
                 mBackgroundTask.start();
             } else {
@@ -343,7 +351,11 @@ public class PhotoPhaseTextureManager extends TextureManager
     @Override
     public void onPartialMediaDiscovered(File[] images, boolean userRequest) {
         if (mBackgroundTask != null) {
-            mBackgroundTask.setPartialAvailableImages(images);
+            // In order to continue with the last media shown, we need all the
+            // images to process them
+            if (!Preferences.Media.isRememberLastMediaShown(mContext)) {
+                mBackgroundTask.setPartialAvailableImages(images);
+            }
         }
     }
 
@@ -357,6 +369,9 @@ public class PhotoPhaseTextureManager extends TextureManager
         // load pictures in background
         if (mBackgroundTask != null) {
             mBackgroundTask.setAvailableImages(images);
+            if (images != null && images.length > 0) {
+                mFirstLoad = false;
+            }
             synchronized (mBackgroundTask.mLoadSync) {
                 mBackgroundTask.mLoadSync.notify();
             }
@@ -528,6 +543,10 @@ public class PhotoPhaseTextureManager extends TextureManager
                 mNewImages.clear();
                 mNewImages.addAll(filtered);
 
+                if (!mFirstLoad) {
+                    reuseLastShownMedia();
+                }
+
                 // Retain used images
                 int count = mUsedImages.size() - 1;
                 for (int i = count; i >= 0; i--) {
@@ -565,6 +584,27 @@ public class PhotoPhaseTextureManager extends TextureManager
             }
         }
 
+        private void reuseLastShownMedia() {
+            if (!Preferences.Media.isRandomSequence(mContext) &&
+                    Preferences.Media.isRememberLastMediaShown(mContext)) {
+                String lastMedia = Preferences.Media.getLastMediaShown(mContext);
+                if (!TextUtils.isEmpty(lastMedia)) {
+                    File lastMediaFile = new File(lastMedia);
+                    mNewImages.addAll(mUsedImages);
+                    mUsedImages.clear();
+                    Collections.sort(mNewImages);
+                    int pos = mNewImages.indexOf(lastMediaFile);
+                    // Only if not exists or is not the next in the list
+                    if (pos > 0) {
+                        // Remove all items to used
+                        for (int i = pos - 1; i >= 0; i--) {
+                            mUsedImages.add(mNewImages.remove(i));
+                        }
+                    }
+                }
+            }
+        }
+
         /**
          * {@inheritDoc}
          */
@@ -597,6 +637,7 @@ public class PhotoPhaseTextureManager extends TextureManager
                         } else {
                             image = mNewImages.remove(0);
                         }
+                        Preferences.Media.setLastMediaShown(mContext, image.getPath());
 
                         // Add to used images
                         mUsedImages.add(image);

@@ -26,9 +26,10 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Build;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v7.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat;
 
 import com.ruesga.android.wallpapers.photophase.AndroidHelper;
+import com.ruesga.android.wallpapers.photophase.PhotoPhaseApplication;
 import com.ruesga.android.wallpapers.photophase.PhotoViewerActivity;
 import com.ruesga.android.wallpapers.photophase.R;
 import com.ruesga.android.wallpapers.photophase.cast.CastService.CastStatusInfo;
@@ -79,7 +80,7 @@ public class CastNotification {
         style.bigPicture(thumbnail);
 
         final PendingIntent contentIntent;
-        if (statusInfo.mCastMode != CastService.CAST_MODE_SLIDESHOW && media != null) {
+        if (statusInfo.mCastMode != CastServiceConstants.CAST_MODE_SLIDESHOW && media != null) {
             contentIntent = getDisplayPhotoActionIntent(ctx, media);
         } else {
             contentIntent = getShowCastQueueActionIntent(ctx);
@@ -91,7 +92,8 @@ public class CastNotification {
     private static void performShowNotification(Context ctx, CastStatusInfo statusInfo,
             NotificationCompat.Style style, PendingIntent contentIntent) {
         // Create the notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    ctx, PhotoPhaseApplication.CAST_NOTIFICATION_CHANNEL_ID);
         builder.setSmallIcon(R.drawable.ic_cast_notification)
                 .setContentTitle(ctx.getString(R.string.app_name))
                 .setContentText(ctx.getString(R.string.cast_app_description))
@@ -104,23 +106,23 @@ public class CastNotification {
                 .setContentIntent(contentIntent)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-        if (statusInfo.mCastMode == CastService.CAST_MODE_SLIDESHOW) {
+        if (statusInfo.mCastMode == CastServiceConstants.CAST_MODE_SLIDESHOW) {
             if (statusInfo.mPaused) {
                 builder.addAction(R.drawable.ic_play,
                         ctx.getString(R.string.cast_resume),
-                        getCastActionIntent(ctx, CastService.COMMAND_RESUME));
+                        getCastActionIntent(ctx, CastServiceConstants.COMMAND_RESUME));
             } else {
                 builder.addAction(R.drawable.ic_pause,
                         ctx.getString(R.string.cast_pause),
-                        getCastActionIntent(ctx, CastService.COMMAND_PAUSE));
+                        getCastActionIntent(ctx, CastServiceConstants.COMMAND_PAUSE));
             }
             builder.addAction(R.drawable.ic_skip_next,
                     ctx.getString(R.string.cast_next),
-                    getCastActionIntent(ctx, CastService.COMMAND_NEXT));
+                    getCastActionIntent(ctx, CastServiceConstants.COMMAND_NEXT));
         }
         builder.addAction(R.drawable.ic_stop,
                 ctx.getString(R.string.cast_stop),
-                getCastActionIntent(ctx, CastService.COMMAND_STOP));
+                getCastActionIntent(ctx, CastServiceConstants.COMMAND_STOP));
 
         Notification notification = builder.build();
         if (ctx instanceof Service) {
@@ -133,16 +135,16 @@ public class CastNotification {
 
     private static PendingIntent getCastActionIntent(Context context, int command) {
         Intent i = new Intent(context, CastService.class);
-        i.setAction(CastService.ACTION_MEDIA_COMMAND);
-        i.putExtra(CastService.EXTRA_COMMAND, command);
+        i.setAction(CastServiceConstants.ACTION_MEDIA_COMMAND);
+        i.putExtra(CastServiceConstants.EXTRA_COMMAND, command);
         return PendingIntent.getService(context, command, i, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static PendingIntent getDisplayPhotoActionIntent(Context context, File media) {
         Intent i = new Intent(context, PhotoViewerActivity.class);
         i.putExtra(PhotoViewerActivity.EXTRA_PHOTO, media.getAbsolutePath());
-        //noinspection deprecation
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -153,10 +155,10 @@ public class CastNotification {
         return PendingIntent.getActivity(context, 2000, i, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static PendingIntent getShowCastQueueActionIntent(Context context) {
         Intent i = new Intent(context, CastPhotoQueueActivity.class);
-        //noinspection deprecation
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP

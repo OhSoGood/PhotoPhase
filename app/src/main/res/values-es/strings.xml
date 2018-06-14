@@ -21,6 +21,7 @@
   <string name="app_legal">Copyright \u00A9 <xliff:g id="year">%1$s</xliff:g> Jorge Ruesga</string>
   <string name="no_pictures_oops_msg">No se han encontrado imágenes</string>
   <string name="no_pictures_permission_required_msg">Permiso requerido. Toca aquí.</string>
+  <string name="no_wallpaper_live_preview_activity_found">No se puede abrir la vista previa de fondo de pantallas</string>
   <string name="no_pictures_albums_found_msg">No hay álbumes</string>
   <string name="no_pictures_albums_tap_to_refresh_msg">Toca para refrescar</string>
   <string name="no_pictures_albums_not_granted_permission_msg">Sin permisos</string>
@@ -48,7 +49,7 @@
   <string name="pref_general_summary">Ajustes generales, efectos y transiciones</string>
   <string name="pref_general_app_shortcut_title">Acceso directo</string>
   <string name="pref_general_app_shortcut_summary">Mostrar una acceso directo a PhotoPhase en menu de aplicaciones de tu launcher</string>
-  <string name="pref_general_set_wallpaper">Establer como fondo de escritorio</string>
+  <string name="pref_general_set_wallpaper">Establecer como fondo de escritorio</string>
   <string name="pref_general_settings">Ajustes</string>
   <string name="pref_general_settings_wallpaper_dim">Oscurecer fondo de pantalla</string>
   <string name="pref_general_settings_background_color">Color del fondo</string>
@@ -68,6 +69,8 @@
   <string name="pref_general_aspect_ratio_correction_summary">Intentar corregir la relación de aspecto original de la imagen cortando la imagen para ajustarla a la celda de destino</string>
   <string name="pref_general_frame_spacer">Espacio entre marcos</string>
   <string name="pref_general_frame_spacer_summary">Añadir un poco de separación entre los marcos</string>
+  <string name="pref_general_wallpaper_offset">Desplazamiento fondo de pantalla</string>
+  <string name="pref_general_wallpaper_offset_summary">Ajustar el desplazamiento del fondo de pantalla para moverse a través de todas las páginas de la applicación de inicio</string>
   <string name="pref_general_transitions">Transiciones</string>
   <string name="pref_general_transitions_types">Tipos</string>
   <string name="pref_general_transitions_types_summary_format"><xliff:g id="selected">%1$d</xliff:g> de <xliff:g id="total">%2$d</xliff:g> tipos seleccionados</string>
@@ -92,6 +95,9 @@
   <string name="pref_media_random_title">Ver las fotos al azar</string>
   <string name="pref_media_random_summary_on">Las fotos se muestran en una secuencia al azar</string>
   <string name="pref_media_random_summary_off">Las fotos se muestran de forma secuencial</string>
+  <string name="pref_media_remember_last_title">Recordar última imagen</string>
+  <string name="pref_media_remember_last_summary_on">La aplicación recordar la última imagen mostrada al arrancar</string>
+  <string name="pref_media_remember_last_summary_off">La aplicación mostrará la primera imagen en la cola al arrancar</string>
   <string name="pref_media_pictures">Imágenes</string>
   <string name="pref_media_albums">Álbumes</string>
   <string name="pref_media_albums_summary">Establecer los álbumes e imágenes a mostrar en el fondo de pantalla</string>
@@ -157,11 +163,13 @@
   <string name="touch_actions_open">Abrir</string>
   <string name="touch_actions_share">Compartir</string>
   <string name="touch_actions_cast">Enviar</string>
+  <string name="touch_actions_show_details">Mostrar detalles</string>
   <string name="touch_actions_none_summary">No hacer nada</string>
   <string name="touch_actions_transition_summary">Efectuar la transición</string>
   <string name="touch_actions_open_summary">Abrir la imagen</string>
   <string name="touch_actions_share_summary">Compartir la imagen</string>
   <string name="touch_actions_cast_summary">Enviar la imagen</string>
+  <string name="touch_actions_show_details_summary">Mostrar detalles de la imagen</string>
   <string name="transitions_cube">Cubo</string>
   <string name="transitions_fade">Desvanecer</string>
   <string name="transitions_flip">Voltear</string>
@@ -203,6 +211,8 @@
   <string name="effects_thermalvision">Visión térmica</string>
   <string name="effects_swirl">Remolino</string>
   <string name="effects_dof">Profundidad de campo</string>
+  <string name="effects_toon">Cartoon</string>
+  <string name="effects_sobel">Sobel</string>
   <string name="borders_noborder">Sin borde</string>
   <string name="borders_simple">Simple</string>
   <string name="borders_rounded">Redondeado</string>
@@ -238,7 +248,7 @@
   <string name="photoviewer_details_name">Nombre: <xliff:g id="name" example="myphoto.jpg">%1$s</xliff:g></string>
   <string name="photoviewer_details_size">Tamaño: <xliff:g id="size" example="234">%1$d</xliff:g> KB</string>
   <string name="photoviewer_details_resolution">Resolución: <xliff:g id="w" example="1024">%1$d</xliff:g>x<xliff:g id="h" example="678">%2$d</xliff:g></string>
-  <string name="photoviewer_details_orientation">Orientación: <xliff:g id="orientation" example="0">%1$s</xliff:g>\u00B0</string>
+  <string name="photoviewer_details_orientation">Orientación: <xliff:g id="orientation" example="0">%1$d</xliff:g>\u00B0</string>
   <string name="photoviewer_details_path">Ruta: <xliff:g id="path" example="/storage/emulated/0/photos">%1$s</xliff:g></string>
   <string name="frame_settings_dialog_title">Ajuste de marco</string>
   <string name="frame_settings_flag_background">Fondo</string>
@@ -261,4 +271,6 @@
   <string name="cast_shuffle">Mezclar</string>
   <string name="cast_repeat">Repetir</string>
   <string name="cast_stop">Detener</string>
+  <string name="cast_doze_warning_title">Modo Doze</string>
+  <string name="cast_doze_warning_message">Para prevenir que el dispositivo entre en modo Doze, y mantener la presentación de imágenes funcionando, mantenga esta actividad en pantalla.</string>
 </resources>

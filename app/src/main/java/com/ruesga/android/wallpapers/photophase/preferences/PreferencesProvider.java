@@ -174,6 +174,13 @@ public final class PreferencesProvider {
             }
 
             /**
+             * Return the current user preference about adding a bit of separation between frames.
+             */
+            public static boolean isWallpaperOffset(Context context) {
+                return getSharedPreferences(context).getBoolean("ui_wallpaper_offset", false);
+            }
+
+            /**
              * Touch behaviour preferences
              */
             public static class Touch {
@@ -218,8 +225,12 @@ public final class PreferencesProvider {
                 public static final int DEFAULT_TRANSITION_INTERVAL_INDEX = 2;
 
                 public static Set<String> getSelectedTransitions(Context context) {
-                    Set<String> defaults = new HashSet<>();
-                    return getSharedPreferences(context).getStringSet("ui_transition_types", defaults);
+                    Set<String> set = getSharedPreferences(context).getStringSet(
+                            "ui_transition_types", null);
+                    if (set == null) {
+                        return new HashSet<>();
+                    }
+                    return new HashSet<>(set);
                 }
 
                 public static void setSelectedTransitions(Context context, Set<String> values) {
@@ -259,8 +270,12 @@ public final class PreferencesProvider {
              */
             public static class Effects {
                 public static Set<String> getSelectedEffects(Context context) {
-                    Set<String> defaults = new HashSet<>();
-                    return getSharedPreferences(context).getStringSet("ui_effect_types", defaults);
+                    Set<String> set = getSharedPreferences(context).getStringSet(
+                            "ui_effect_types", null);
+                    if (set == null) {
+                        return new HashSet<>();
+                    }
+                    return new HashSet<>(set);
                 }
 
                 public static void setSelectedEffects(Context context, Set<String> values) {
@@ -314,8 +329,12 @@ public final class PreferencesProvider {
                 }
 
                 public static Set<String> getSelectedBorders(Context context) {
-                    Set<String> defaults = new HashSet<>();
-                    return getSharedPreferences(context).getStringSet("ui_border_types", defaults);
+                    Set<String> set = getSharedPreferences(context).getStringSet(
+                            "ui_border_types", null);
+                    if (set == null) {
+                        return new HashSet<>();
+                    }
+                    return new HashSet<>(set);
                 }
 
                 public static void setSelectedBorders(Context context, Set<String> values) {
@@ -359,12 +378,22 @@ public final class PreferencesProvider {
             }
 
             /**
-             * Method that returns if the photos are displaye randomly or sequentially
+             * Method that returns if the photos are displayed randomly or sequentially
              *
              * @return boolean If the app must be select new albums when they are discovered.
              */
             public static boolean isRandomSequence(Context context) {
                 return getSharedPreferences(context).getBoolean("ui_media_random", true);
+            }
+
+            /**
+             * Method that returns if it should use the last shown image on wallpaper start
+             *
+             * @return boolean If it should use the last shown image on wallpaper start
+             */
+            public static boolean isRememberLastMediaShown(Context context) {
+                return getSharedPreferences(context).getBoolean(
+                        "ui_media_remember_last_media_show", false);
             }
 
             /**
@@ -383,8 +412,12 @@ public final class PreferencesProvider {
              * @return Set<String> The list of albums and pictures to be displayed
              */
             public static Set<String> getSelectedMedia(Context context) {
-                Set<String> defaults = new HashSet<>();
-                return getSharedPreferences(context).getStringSet("media_selected_media", defaults);
+                Set<String> set = getSharedPreferences(context).getStringSet(
+                        "media_selected_media", null);
+                if (set == null) {
+                    return new HashSet<>();
+                }
+                return new HashSet<>(set);
             }
 
             /**
@@ -409,8 +442,12 @@ public final class PreferencesProvider {
             * @return Set<String> The list of albums and pictures to be displayed
             */
            public static Set<String> getLastDiscorevedAlbums(Context context) {
-               Set<String> defaults = new HashSet<>();
-               return getSharedPreferences(context).getStringSet("media_last_discovered_albums", defaults);
+               Set<String> set = getSharedPreferences(context).getStringSet(
+                       "media_last_discovered_albums", null);
+               if (set == null) {
+                   return new HashSet<>();
+               }
+               return new HashSet<>(set);
            }
 
            /**
@@ -428,6 +465,29 @@ public final class PreferencesProvider {
                editor.putStringSet("media_last_discovered_albums", albums);
                editor.apply();
            }
+
+            /**
+             * Method that returns the last media shown
+             *
+             * @return String The last media shown
+             */
+            public static String getLastMediaShown(Context context) {
+                return getSharedPreferences(context).getString("media_last_media_shown", null);
+            }
+
+            /**
+             * Method that returns the list of albums and pictures to be displayed
+             *
+             * @param context The current context
+             * @param media The current media shown
+             */
+            public static synchronized void setLastMediaShown(Context context, String media) {
+                SharedPreferences preferences =
+                        context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+                Editor editor = preferences.edit();
+                editor.putString("media_last_media_shown", media);
+                editor.apply();
+            }
         }
 
         /**
@@ -787,6 +847,18 @@ public final class PreferencesProvider {
              */
             public static boolean isShowTrack(Context context) {
                 return getSharedPreferences(context).getBoolean("cast_ui_show_track", true);
+            }
+
+            public static boolean isShowDozeModeWarning(Context context) {
+                return getSharedPreferences(context).getBoolean("cast_show_doze_mode_warning", true);
+            }
+
+            public static void setShowDozeModeWarning(Context context, boolean show) {
+                SharedPreferences preferences =
+                        context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+                Editor editor = preferences.edit();
+                editor.putBoolean("cast_show_doze_mode_warning", show);
+                editor.apply();
             }
         }
 

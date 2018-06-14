@@ -34,11 +34,17 @@
     <uses-permission android:name="android.permission.GET_TASKS" android:maxSdkVersion="19"/>
 
     <uses-permission android:name="com.ruesga.android.wallpapers.photophase.BIND_PERMISSION"/>
+    <uses-permission android:name="com.ruesga.android.wallpapers.photophase.WRITE_CONTENT_PERMISSION"/>
+
     <permission
         android:name="com.ruesga.android.wallpapers.photophase.BIND_PERMISSION"
         android:protectionLevel="signature" />
+    <permission
+        android:name="com.ruesga.android.wallpapers.photophase.WRITE_CONTENT_PERMISSION"
+        android:protectionLevel="signature" />
 
     <application
+        android:name=".PhotoPhaseApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:description="@string/app_description"
@@ -47,7 +53,8 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:supportsRtl="true"
-        tools:ignore="GoogleAppIndexingWarning">
+        android:extractNativeLibs="true"
+        tools:ignore="GoogleAppIndexingWarning,UnusedAttribute">
 
         <service
             android:name="PhotoPhaseWallpaper"
@@ -96,7 +103,13 @@
 
         <service
             android:name=".cast.CastService"
-            android:permission="com.ruesga.android.wallpapers.photophase.BIND_PERMISSION" />
+            android:permission="com.ruesga.android.wallpapers.photophase.BIND_PERMISSION">
+            <intent-filter>
+                <action android:name="com.ruesga.android.wallpapers.photophase.actions.CAST_DEVICE_SELECTED" />
+                <action android:name="com.ruesga.android.wallpapers.photophase.actions.CAST_CONNECTIVITY_CHANGED" />
+                <action android:name="com.ruesga.android.wallpapers.photophase.actions.CAST_MEDIA_COMMAND" />
+            </intent-filter>
+        </service>
 
         <receiver
             android:name=".cast.CastReceiver"
@@ -107,18 +120,11 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".cast.CastGcmTaskService"
-                 android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"
-                 android:exported="true">
-            <intent-filter>
-                <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY"/>
-            </intent-filter>
-        </service>
-
         <provider
             android:name=".providers.TemporaryContentAccessProvider"
             android:authorities="com.ruesga.android.wallpapers.photophase.providers"
             android:grantUriPermissions="true"
+            android:writePermission="com.ruesga.android.wallpapers.photophase.WRITE_CONTENT_PERMISSION"
             android:exported="true"
             tools:ignore="ExportedContentProvider"/>
 

@@ -18,6 +18,7 @@ package com.ruesga.android.wallpapers.photophase.cast;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.ruesga.android.wallpapers.photophase.preferences.PreferencesProvider;
 
@@ -35,13 +36,18 @@ public class CastReceiver extends BroadcastReceiver {
             if (action.equals("android.net.wifi.supplicant.CONNECTION_CHANGE")
                     || action.equals("android.net.wifi.STATE_CHANGE")) {
                 // Request a cast scan
-                Intent i = new Intent(context, CastService.class);
-                i.setAction(CastService.ACTION_CONNECTIVITY_CHANGED);
-                context.startService(i);
+                Intent i;
+                try {
+                    i = new Intent(context, CastService.class);
+                    i.setAction(CastServiceConstants.ACTION_CONNECTIVITY_CHANGED);
+                    context.startService(i);
+                } catch (IllegalStateException ex) {
+                    // This should happen because neither of this actions never got called on O
+                }
 
                 // Notify anyone that connectivity changed
-                i = new Intent(CastService.ACTION_CONNECTIVITY_CHANGED);
-                context.sendBroadcast(i);
+                i = new Intent(CastServiceConstants.ACTION_CONNECTIVITY_CHANGED);
+                LocalBroadcastManager.getInstance(context).sendBroadcast(i);
             }
         }
     }

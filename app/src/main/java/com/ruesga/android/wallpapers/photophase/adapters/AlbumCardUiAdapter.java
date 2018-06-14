@@ -18,6 +18,7 @@ package com.ruesga.android.wallpapers.photophase.adapters;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,8 +75,9 @@ public class AlbumCardUiAdapter extends ArrayAdapter<Album> {
     /**
      * {@inheritDoc}
      */
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
 
         // Retrieve album
         final Album album = this.mData.get(position);
@@ -90,7 +92,7 @@ public class AlbumCardUiAdapter extends ArrayAdapter<Album> {
 
             // Create the controller for the view
             ViewHolder viewHolder = new ViewHolder();
-            viewHolder.mAlbumInfoView = (AlbumInfoView)v.findViewById(R.id.album_info);
+            viewHolder.mAlbumInfoView = v.findViewById(R.id.album_info);
             viewHolder.mAlbumInfoView.setAlbum(album);
             viewHolder.mAlbumInfoView.addCallBackListener(mAlbumInfoCallback);
             viewHolder.mAlbumInfoView.setCastProxy(mCastProxy);

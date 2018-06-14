@@ -33,6 +33,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -69,12 +70,14 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
 
     private static final String TAG = "CastPhotoQueueActivity";
 
+    public static final String EXTRA_SHOW_DOZE_WARNING = "doze_warning";
+
     private class QueueViewHolder extends RecyclerView.ViewHolder {
         private ImageView mPhoto;
 
         public QueueViewHolder(View itemView) {
             super(itemView);
-            mPhoto = (ImageView) itemView.findViewById(R.id.queue_photo);
+            mPhoto = itemView.findViewById(R.id.queue_photo);
         }
     }
 
@@ -130,7 +133,7 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
                     holder.itemView.setSelected(false);
                     File f = new File(item);
                     AsyncPictureLoaderTask task = new AsyncPictureLoaderTask(mContext, holder.mPhoto,
-                            mPhotoSize, mPhotoSize, new AsyncPictureLoaderTask.OnPictureLoaded() {
+                            mPhotoSize, mPhotoSize, 2, new AsyncPictureLoaderTask.OnPictureLoaded() {
                         @Override
                         public void onPictureLoaded(Object o, Drawable drawable) {
                             holder.itemView.setSelected(selected);
@@ -178,22 +181,22 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
             if (mCastService != null) {
                 String action = intent.getAction();
                 switch (action) {
-                    case CastService.ACTION_MEDIA_CHANGED:
+                    case CastServiceConstants.ACTION_MEDIA_CHANGED:
                         updateTrackInfo();
                         break;
-                    case CastService.ACTION_QUEUE_CHANGED:
+                    case CastServiceConstants.ACTION_QUEUE_CHANGED:
                         refreshQueue(true);
                         break;
-                    case CastService.ACTION_LOADING_MEDIA:
+                    case CastServiceConstants.ACTION_LOADING_MEDIA:
                         showLoading();
                         break;
-                    case CastService.ACTION_SERVER_STOP:
+                    case CastServiceConstants.ACTION_SERVER_STOP:
                         if (!mPlayPauseDrawable.isPlay()) {
                             mPlayPauseDrawable.getPausePlayAnimator().start();
                         }
                         updateCurrentPlaying(null);
                         break;
-                    case CastService.ACTION_SERVER_EXITED:
+                    case CastServiceConstants.ACTION_SERVER_EXITED:
                         finish();
                         break;
                 }
@@ -295,22 +298,22 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
         AndroidHelper.setupRecentBar(this);
 
         mQueueMediaPanel = findViewById(R.id.queue_media_panel);
-        mShuffle = (ImageView) findViewById(R.id.shuffle);
-        mRepeat = (ImageView) findViewById(R.id.repeat);
-        ImageView playPause = (ImageView) findViewById(R.id.play_pause);
+        mShuffle = findViewById(R.id.shuffle);
+        mRepeat = findViewById(R.id.repeat);
+        ImageView playPause = findViewById(R.id.play_pause);
         mPlayPauseDrawable = new PlayPauseDrawable();
         playPause.setImageDrawable(mPlayPauseDrawable);
-        ImageView previous = (ImageView) findViewById(R.id.previous);
-        ImageView next = (ImageView) findViewById(R.id.next);
+        ImageView previous = findViewById(R.id.previous);
+        ImageView next = findViewById(R.id.next);
 
         mLogo = findViewById(R.id.logo);
-        mPhoto = (ImageView) findViewById(R.id.photo);
-        mTitle = (TextView) findViewById(R.id.photo_title);
-        mAlbum = (TextView) findViewById(R.id.photo_album);
-        mLoading = (ProgressBar) findViewById(R.id.loading);
+        mPhoto = findViewById(R.id.photo);
+        mTitle = findViewById(R.id.photo_title);
+        mAlbum = findViewById(R.id.photo_album);
+        mLoading = findViewById(R.id.loading);
         mLoadingStatus = false;
 
-        mQueue = (RecyclerView) findViewById(R.id.queue);
+        mQueue = findViewById(R.id.queue);
         mQueue.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         mQueueAdapter = new QueueAdapter(this, mQueueList, mOnItemClickListener);
         mQueue.setAdapter(mQueueAdapter);
@@ -330,11 +333,11 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
         next.setOnClickListener(this);
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(CastService.ACTION_MEDIA_CHANGED);
-        filter.addAction(CastService.ACTION_QUEUE_CHANGED);
-        filter.addAction(CastService.ACTION_LOADING_MEDIA);
-        filter.addAction(CastService.ACTION_SERVER_STOP);
-        filter.addAction(CastService.ACTION_SERVER_EXITED);
+        filter.addAction(CastServiceConstants.ACTION_MEDIA_CHANGED);
+        filter.addAction(CastServiceConstants.ACTION_QUEUE_CHANGED);
+        filter.addAction(CastServiceConstants.ACTION_LOADING_MEDIA);
+        filter.addAction(CastServiceConstants.ACTION_SERVER_STOP);
+        filter.addAction(CastServiceConstants.ACTION_SERVER_EXITED);
         LocalBroadcastManager.getInstance(this).registerReceiver(mCastReceiver, filter);
 
         try {
@@ -342,6 +345,11 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
             bindService(i, mCastConnection, Context.BIND_AUTO_CREATE);
         } catch (SecurityException se) {
             Log.w(TAG, "Can't bound to CastService", se);
+        }
+
+        // Display a warning about doze mode
+        if (getIntent() != null && getIntent().getBooleanExtra(EXTRA_SHOW_DOZE_WARNING, false)) {
+            showDozeModeWarning();
         }
     }
 
@@ -422,7 +430,7 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
         Intent intent = new Intent(PreferencesProvider.ACTION_SETTINGS_CHANGED);
         intent.putExtra(PreferencesProvider.EXTRA_FLAG_CAST_CONFIGURATION_CHANGE, Boolean.TRUE);
         intent.putExtra(PreferencesProvider.EXTRA_PREF_KEY, key);
-        sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void updateCurrentPlaying(String media) {
@@ -460,7 +468,7 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
                 mPhoto.animate().alpha(1.0f).setDuration(450L).setListener(null).start();
                 mPhoto.setImageBitmap(
                         BitmapUtils.createUnscaledBitmap(
-                                f, mScreenDim.x, mScreenDim.y));
+                                f, mScreenDim.x, mScreenDim.y, 2));
 
                 mTitle.setText(CastUtils.getTrackName(f));
                 mAlbum.setText(CastUtils.getAlbumName(f));
@@ -499,7 +507,7 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
                             if (dx < 0) {
                                 dx = 0;
                             }
-                            if (mode == CastService.CAST_MODE_SLIDESHOW && shuffle) {
+                            if (mode == CastServiceConstants.CAST_MODE_SLIDESHOW && shuffle) {
                                 mQueue.scrollBy(dx - mOverallXScroll, 0);
                             } else {
                                 mQueue.smoothScrollBy(dx - mOverallXScroll, 0);
@@ -543,5 +551,22 @@ public class CastPhotoQueueActivity extends AppCompatActivity implements OnClick
     private void showLoading() {
         mLoading.setVisibility(View.VISIBLE);
         mLoadingStatus = true;
+    }
+
+    private void showDozeModeWarning() {
+        if (PreferencesProvider.Preferences.Cast.isShowDozeModeWarning(this)) {
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.cast_doze_warning_title)
+                    .setMessage(R.string.cast_doze_warning_message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .create();
+            dialog.show();
+
+            // Show warning only once
+            PreferencesProvider.Preferences.Cast.setShowDozeModeWarning(this, false);
+        }
+
+
+
     }
 }

@@ -32,7 +32,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
@@ -41,6 +40,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.media.ExifInterface;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -55,7 +55,10 @@ import android.view.animation.AccelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.github.chrisbanes.photoview.OnPhotoTapListener;
+import com.github.chrisbanes.photoview.PhotoView;
 import com.ruesga.android.wallpapers.photophase.cast.CastService;
+import com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants;
 import com.ruesga.android.wallpapers.photophase.preferences.PreferencesProvider;
 import com.ruesga.android.wallpapers.photophase.tasks.AsyncPictureLoaderTask;
 import com.ruesga.android.wallpapers.photophase.utils.BitmapUtils;
@@ -74,17 +77,18 @@ import java.util.Locale;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import uk.co.senab.photoview.PhotoViewAttacher;
+import okhttp3.ResponseBody;
 
 public class PhotoViewerActivity extends AppCompatActivity {
     private static final String TAG = "PhotoViewerActivity";
 
     public static final String EXTRA_PHOTO = "photo";
+    public static final String EXTRA_SHOW_DETAILS_ONLY = "show_details_only";
 
     private File mPhoto;
+    private boolean mShowDetailsOnly;
 
-    private PhotoViewAttacher mPhotoViewAttacher;
-    private ImageView mPhotoView;
+    private PhotoView mPhotoView;
     private View mDetails;
     private MenuItem mDetailsMenu;
     private MenuItem mShareMenu;
@@ -96,7 +100,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
     private boolean mHasTransition;
     private boolean mInDetails;
 
-    private final float[] mLocation = new float[2];
+    private double[] mLocation;
     boolean mHasLocation = false;
 
     // To avoid passing a bitmap in an extra
@@ -142,11 +146,11 @@ public class PhotoViewerActivity extends AppCompatActivity {
         }
     };
 
-    private final AsyncTask<Float, Void, Bitmap> mMapLoaderTask = new AsyncTask<Float, Void, Bitmap>() {
+    private final AsyncTask<Double, Void, Bitmap> mMapLoaderTask = new AsyncTask<Double, Void, Bitmap>() {
         private static final String OPEN_STREETMAP_URL =
                 "http://staticmap.openstreetmap.de/staticmap.php/";
         private static final String IMAGE_URL = OPEN_STREETMAP_URL +
-                "?center=%f,%f&zoom=14&size=800x600&maptype=osmarenderer&markers=%f,%f,red-pushpin";
+                "?center=%f,%f&zoom=14&size=800x600&maptype=mapnik&markers=%f,%f,red-pushpin";
 
         @Override
         @SuppressWarnings("ConstantConditions")
@@ -155,7 +159,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Bitmap doInBackground(Float... params) {
+        protected Bitmap doInBackground(Double... params) {
             // Check if we have connectivity
             if (!AndroidHelper.isNetworkAvailable(PhotoViewerActivity.this)) {
                 Log.w(TAG, "No network available. Cannot download map");
@@ -172,15 +176,20 @@ public class PhotoViewerActivity extends AppCompatActivity {
                 Response response = okClient.newCall(request).execute();
 
                 // Extract the bitmap
-                InputStream is = response.body().byteStream();
-                try {
-                    return BitmapUtils.decodeBitmap(is);
-                } finally {
+                ResponseBody body = response.body();
+                if (body != null) {
+                    InputStream is = body.byteStream();
                     try {
-                        is.close();
-                    } catch (IOException ex) {
-                        // Ignore
+                        return BitmapUtils.decodeBitmap(is);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException ex) {
+                            // Ignore
+                        }
                     }
+                } else {
+                    Log.w(TAG, "Failed to download map. No body");
                 }
 
             } catch (IOException ex) {
@@ -197,7 +206,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
                 findViewById(R.id.details_map_no_data).setVisibility(View.VISIBLE);
             } else {
                 findViewById(R.id.details_map_progress).setVisibility(View.GONE);
-                ImageView iv = (ImageView) findViewById(R.id.details_map);
+                ImageView iv = findViewById(R.id.details_map);
                 iv.setImageBitmap(bitmap);
             }
         }
@@ -206,11 +215,6 @@ public class PhotoViewerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.photo_viewer);
-
-        if (savedInstanceState != null) {
-            mHasTransition = savedInstanceState.getBoolean("has_transition", true);
-        }
 
         if (getIntent() != null) {
             String photo = getIntent().getStringExtra(EXTRA_PHOTO);
@@ -224,29 +228,31 @@ public class PhotoViewerActivity extends AppCompatActivity {
                 finishActivity();
                 return;
             }
+
+            mShowDetailsOnly = getIntent().getBooleanExtra(EXTRA_SHOW_DETAILS_ONLY, false);
+        }
+
+        setContentView(R.layout.photo_viewer);
+
+        if (savedInstanceState != null) {
+            mHasTransition = savedInstanceState.getBoolean("has_transition", true);
         }
 
         initToolbar();
         AndroidHelper.setupRecentBar(this);
 
-        // Initialize the nfc adapter if available
-        if (AndroidHelper.isJellyBeanMr1OrGreater()
-                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
-            mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        }
-
         mDetails = findViewById(R.id.photo_details);
-        mPhotoView = (ImageView) findViewById(R.id.photo);
+        mPhotoView = findViewById(R.id.photo);
         if (mPhotoView != null) {
             DisplayMetrics metrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            int factor = AndroidHelper.isHighEndDevice(this) ? 2 : 4;
             mThumbnail = BitmapUtils.createUnscaledBitmap(
-                    mPhoto, metrics.widthPixels / 8, metrics.heightPixels / 8);
+                    mPhoto, metrics.widthPixels / factor, metrics.heightPixels / factor, 1);
             mPhotoView.setImageBitmap(mThumbnail);
-            mPhotoViewAttacher = new PhotoViewAttacher(mPhotoView);
-            mPhotoViewAttacher.setOnViewTapListener(new PhotoViewAttacher.OnViewTapListener() {
+            mPhotoView.setOnPhotoTapListener(new OnPhotoTapListener() {
                 @Override
-                public void onViewTap(View view, float v, float v1) {
+                public void onPhotoTap(ImageView view, float x, float y) {
                     if (mToolbar != null) {
                         boolean hide = mToolbar.getAlpha() > 0.0f;
                         mToolbar.animate()
@@ -259,6 +265,21 @@ public class PhotoViewerActivity extends AppCompatActivity {
                 }
             });
         }
+
+        if (mShowDetailsOnly) {
+            mDetails = findViewById(R.id.photo_details);
+            mPhotoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            updateDetailsInformation();
+            displayDetails();
+            return;
+        }
+
+        // Initialize the nfc adapter if available
+        if (AndroidHelper.isJellyBeanMr1OrGreater()
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC)) {
+            mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        }
+
         if (AndroidHelper.isLollipopOrGreater() && !mHasTransition) {
             addTransitionListener();
         }
@@ -273,41 +294,45 @@ public class PhotoViewerActivity extends AppCompatActivity {
         }
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(CastService.ACTION_SCAN_FINISHED);
+        filter.addAction(CastServiceConstants.ACTION_SCAN_FINISHED);
         LocalBroadcastManager.getInstance(this).registerReceiver(mCastReceiver, filter);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mPictureLoaded) {
-            Drawable drawable = mPhotoView.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                if (bitmap != null && !bitmap.isRecycled()) {
-                    bitmap.recycle();
+        if (!mShowDetailsOnly) {
+            if (mPictureLoaded) {
+                Drawable drawable = mPhotoView.getDrawable();
+                if (drawable instanceof BitmapDrawable) {
+                    BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                    Bitmap bitmap = bitmapDrawable.getBitmap();
+                    if (bitmap != null && !bitmap.isRecycled()) {
+                        bitmap.recycle();
+                    }
                 }
             }
-        }
-        if (mThumbnail != null) {
-            mThumbnail.recycle();
-            mThumbnail = null;
-        }
+            if (mThumbnail != null) {
+                mThumbnail.recycle();
+                mThumbnail = null;
+            }
 
-        if (mCastService != null) {
-            unbindService(mCastConnection);
-        }
+            if (mCastService != null) {
+                unbindService(mCastConnection);
+            }
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mCastReceiver);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(mCastReceiver);
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.photoviewer, menu);
-        mDetailsMenu = menu.findItem(R.id.mnu_details);
-        mShareMenu = menu.findItem(R.id.mnu_share);
-        mCastMenu = menu.findItem(R.id.mnu_cast);
+        if (!mShowDetailsOnly) {
+            getMenuInflater().inflate(R.menu.photoviewer, menu);
+            mDetailsMenu = menu.findItem(R.id.mnu_details);
+            mShareMenu = menu.findItem(R.id.mnu_share);
+            mCastMenu = menu.findItem(R.id.mnu_cast);
+        }
         return true;
     }
 
@@ -343,7 +368,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
             DisplayMetrics metrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(metrics);
             mTask = new AsyncPictureLoaderTask(this, mPhotoView, metrics.widthPixels,
-                    metrics.heightPixels, new AsyncPictureLoaderTask.OnPictureLoaded() {
+                    metrics.heightPixels, 1, new AsyncPictureLoaderTask.OnPictureLoaded() {
                 @Override
                 public void onPreloadImage() {
                     try {
@@ -356,7 +381,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
                 @Override
                 public void onPictureLoaded(Object o, Drawable drawable) {
                     if (mPhotoView != null) {
-                        mPhotoViewAttacher.update();
+                        mPhotoView.setImageDrawable(drawable);
                     }
 
                     // Update the details information
@@ -385,7 +410,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
         super.onAttachedToWindow();
 
         // Transition is not supported
-        if (!AndroidHelper.isLollipopOrGreater() || !mHasTransition) {
+        if (!mShowDetailsOnly && (!AndroidHelper.isLollipopOrGreater() || !mHasTransition)) {
             performAsyncPhotoLoading();
         }
     }
@@ -394,8 +419,8 @@ public class PhotoViewerActivity extends AppCompatActivity {
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        if (mTask != null && (mTask.getStatus() == AsyncTask.Status.RUNNING ||
-                mTask.getStatus() == AsyncTask.Status.PENDING)) {
+        if (!mShowDetailsOnly && (mTask != null && (mTask.getStatus() == AsyncTask.Status.RUNNING ||
+                mTask.getStatus() == AsyncTask.Status.PENDING))) {
             mTask.cancel(true);
         }
     }
@@ -408,7 +433,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
 
     private void initToolbar() {
         // Add a toolbar
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(" ");
@@ -420,7 +445,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         switch (menuItem.getItemId()) {
             case android.R.id.home:
-                if (mInDetails) {
+                if (!mShowDetailsOnly && mInDetails) {
                     hideDetails();
                 } else {
                     finishActivity();
@@ -446,7 +471,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (mInDetails) {
+        if (!mShowDetailsOnly && mInDetails) {
             hideDetails();
         } else {
             super.onBackPressed();
@@ -455,10 +480,11 @@ public class PhotoViewerActivity extends AppCompatActivity {
     }
 
     private void finishActivity() {
-        if (mPhotoViewAttacher != null) {
-            mPhotoViewAttacher.cleanup();
+        if (mShowDetailsOnly) {
+            supportFinishAfterTransition();
+        } else {
+            finish();
         }
-        supportFinishAfterTransition();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -468,9 +494,15 @@ public class PhotoViewerActivity extends AppCompatActivity {
             public void onAnimationStart(Animator animation) {
                 mDetails.setAlpha(0f);
                 mDetails.setVisibility(View.VISIBLE);
-                mDetailsMenu.setVisible(false);
-                mShareMenu.setVisible(false);
-                mCastMenu.setVisible(false);
+                if (mDetailsMenu != null) {
+                    mDetailsMenu.setVisible(false);
+                }
+                if (mShareMenu != null) {
+                    mShareMenu.setVisible(false);
+                }
+                if (mCastMenu != null) {
+                    mCastMenu.setVisible(false);
+                }
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(getString(R.string.mnu_details));
                 }
@@ -493,9 +525,10 @@ public class PhotoViewerActivity extends AppCompatActivity {
 
         // Request the image of the map
         if (mHasLocation) {
-            ImageView iv = (ImageView) findViewById(R.id.details_map);
+            ImageView iv = findViewById(R.id.details_map);
             if (iv.getDrawable() == null && mMapLoaderTask.getStatus() != AsyncTask.Status.RUNNING) {
-                mMapLoaderTask.execute(mLocation[0], mLocation[1]);
+                mMapLoaderTask.executeOnExecutor(
+                        AsyncTask.THREAD_POOL_EXECUTOR, mLocation[0], mLocation[1]);
             }
         }
     }
@@ -510,9 +543,15 @@ public class PhotoViewerActivity extends AppCompatActivity {
             public void onAnimationEnd(Animator animation) {
                 mDetails.setAlpha(0f);
                 mDetails.setVisibility(View.GONE);
-                mDetailsMenu.setVisible(true);
-                mShareMenu.setVisible(true);
-                mCastMenu.setVisible(hasNearDevices());
+                if (mDetailsMenu != null) {
+                    mDetailsMenu.setVisible(true);
+                }
+                if (mShareMenu != null) {
+                    mShareMenu.setVisible(true);
+                }
+                if (mCastMenu != null) {
+                    mCastMenu.setVisible(hasNearDevices());
+                }
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(" ");
                 }
@@ -541,7 +580,7 @@ public class PhotoViewerActivity extends AppCompatActivity {
         String notAvailable = getString(R.string.photoviewer_details_not_available);
         String title = mPhoto.getName();
         Date datetime = null;
-        String location = null;
+        StringBuilder location = null;
         String manufacturer = null;
         String model = null;
         double exposure = -1d;
@@ -578,7 +617,8 @@ public class PhotoViewerActivity extends AppCompatActivity {
             }
 
             // Location
-            if (exif.getLatLong(mLocation)) {
+            mLocation = exif.getLatLong();
+            if (mLocation != null) {
                 mHasLocation = true;
                 if (Geocoder.isPresent()) {
                     Geocoder geocoder = new Geocoder(this, AndroidHelper.getLocale(getResources()));
@@ -586,12 +626,12 @@ public class PhotoViewerActivity extends AppCompatActivity {
                     if (!addresses.isEmpty()) {
                         Address address = addresses.get(0);
                         int max = address.getMaxAddressLineIndex();
-                        location = "";
+                        location = new StringBuilder();
                         for (int i = 0; i <= max; i++) {
                             if (i > 0) {
-                                location += ", ";
+                                location.append(", ");
                             }
-                            location += address.getAddressLine(i);
+                            location.append(address.getAddressLine(i));
                         }
                     }
                 }
@@ -613,17 +653,12 @@ public class PhotoViewerActivity extends AppCompatActivity {
                     aperture = Double.parseDouble(exif.getAttribute(ExifInterface.TAG_F_NUMBER));
                 } else {
                     //noinspection deprecation
-                    aperture = Double.parseDouble(exif.getAttribute(ExifInterface.TAG_APERTURE));
+                    aperture = Double.parseDouble(exif.getAttribute(ExifInterface.TAG_F_NUMBER));
                 }
             } catch (NullPointerException | NumberFormatException ex) {
                 // Ignore
             }
-            if (AndroidHelper.isNougatOrGreater()) {
-                iso = exif.getAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS);
-            } else {
-                //noinspection deprecation
-                iso = exif.getAttribute(ExifInterface.TAG_ISO);
-            }
+            iso = exif.getAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY);
             flash = exif.getAttributeInt(ExifInterface.TAG_FLASH, -1);
 
             // Resolution
@@ -648,14 +683,16 @@ public class PhotoViewerActivity extends AppCompatActivity {
         // Ensure we can have information about the picture size
         if (w <= 0 || h <= 0) {
             Rect r = BitmapUtils.getBitmapDimensions(mPhoto);
-            w = r.width();
-            h = r.height();
+            if (r != null) {
+                w = r.width();
+                h = r.height();
+            }
         }
 
         TextView tv;
 
         // Date
-        tv = (TextView) findViewById(R.id.details_datetime);
+        tv = findViewById(R.id.details_datetime);
         tv.setText(datetime == null
                 ? notAvailable
                 : getString(R.string.photoviewer_details_format,
@@ -665,16 +702,16 @@ public class PhotoViewerActivity extends AppCompatActivity {
         if (!mHasLocation) {
             findViewById(R.id.details_lat_lon).setVisibility(View.GONE);
             findViewById(R.id.details_map_block).setVisibility(View.GONE);
-            tv = (TextView) findViewById(R.id.details_location);
+            tv = findViewById(R.id.details_location);
             tv.setText(notAvailable);
         } else {
-            tv = (TextView) findViewById(R.id.details_location);
+            tv = findViewById(R.id.details_location);
             if (location == null) {
                 tv.setVisibility(View.GONE);
             } else {
-                tv.setText(location);
+                tv.setText(location.toString());
             }
-            tv = (TextView) findViewById(R.id.details_lat_lon);
+            tv = findViewById(R.id.details_lat_lon);
             tv.setText(getString(R.string.photoviewer_details_latitude_longitude,
                     mLocation[0], mLocation[1]));
 
@@ -694,27 +731,27 @@ public class PhotoViewerActivity extends AppCompatActivity {
         if (manufacturer == null && model == null ) {
             findViewById(R.id.details_camera).setVisibility(View.GONE);
         } else {
-            tv = (TextView) findViewById(R.id.details_manufacturer);
+            tv = findViewById(R.id.details_manufacturer);
             tv.setText(manufacturer == null
                     ? getString(R.string.photoviewer_details_manufacturer, notAvailable)
                     : getString(R.string.photoviewer_details_manufacturer, manufacturer));
-            tv = (TextView) findViewById(R.id.details_model);
+            tv = findViewById(R.id.details_model);
             tv.setText(model == null
                     ? getString(R.string.photoviewer_details_model, notAvailable)
                     : getString(R.string.photoviewer_details_model, model));
-            tv = (TextView) findViewById(R.id.details_exposure);
+            tv = findViewById(R.id.details_exposure);
             tv.setText(exposure == -1
                     ? getString(R.string.photoviewer_details_exposure, notAvailable)
                     : getString(R.string.photoviewer_details_exposure, nf1.format(exposure)));
-            tv = (TextView) findViewById(R.id.details_aperture);
+            tv = findViewById(R.id.details_aperture);
             tv.setText(aperture == -1
                     ? getString(R.string.photoviewer_details_aperture, notAvailable)
                     : getString(R.string.photoviewer_details_aperture, nf2.format(aperture)));
-            tv = (TextView) findViewById(R.id.details_iso);
+            tv = findViewById(R.id.details_iso);
             tv.setText(iso == null
                     ? getString(R.string.photoviewer_details_iso, notAvailable)
                     : getString(R.string.photoviewer_details_iso, iso));
-            tv = (TextView) findViewById(R.id.details_flash);
+            tv = findViewById(R.id.details_flash);
             tv.setText(flash == -1
                     ? getString(R.string.photoviewer_details_flash, notAvailable)
                     : getString(R.string.photoviewer_details_flash, ((flash & 0x01) == 0x1)
@@ -723,35 +760,35 @@ public class PhotoViewerActivity extends AppCompatActivity {
         }
 
         // Info
-        tv = (TextView) findViewById(R.id.details_name);
+        tv = findViewById(R.id.details_name);
         tv.setText(getString(R.string.photoviewer_details_name, title));
-        tv = (TextView) findViewById(R.id.details_size);
+        tv = findViewById(R.id.details_size);
         tv.setText(getString(R.string.photoviewer_details_size, mPhoto.length() / 1024));
-        tv = (TextView) findViewById(R.id.details_resolution);
+        tv = findViewById(R.id.details_resolution);
         if (w == -1 || h == -1) {
             tv.setVisibility(View.GONE);
         } else {
             tv.setText(getString(R.string.photoviewer_details_resolution, w, h));
         }
-        tv = (TextView) findViewById(R.id.details_orientation);
+        tv = findViewById(R.id.details_orientation);
         if (orientation == -1) {
             tv.setVisibility(View.GONE);
         } else {
             tv.setText(getString(R.string.photoviewer_details_orientation, orientation));
         }
-        tv = (TextView) findViewById(R.id.details_path);
+        tv = findViewById(R.id.details_path);
         tv.setText(getString(R.string.photoviewer_details_path, mPhoto.getParent()));
 
     }
 
-    private boolean hasExternalMapApp(float latitude, float longitude) {
+    private boolean hasExternalMapApp(double latitude, double longitude) {
         String uri = String.format(Locale.ENGLISH, "geo:%f,%f", latitude, longitude);
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
         PackageManager manager = getPackageManager();
         return manager.queryIntentActivities(intent, 0).size() > 0;
     }
 
-    private void openLocationInExternalApp(float latitude, float longitude) {
+    private void openLocationInExternalApp(double latitude, double longitude) {
         String uri = String.format(Locale.ENGLISH, "geo:%f,%f", latitude, longitude);
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
         startActivity(intent);

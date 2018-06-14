@@ -40,6 +40,7 @@ import android.os.RemoteException;
 import android.preference.PreferenceFragment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -153,6 +154,9 @@ public class ChoosePicturesFragment extends PreferenceFragment
                     Album album = null;
                     while (c.moveToNext()) {
                         album = processPath(all, pending, album, c.getString(0));
+                        if (album == null) {
+                            continue;
+                        }
                         count++;
                         if (count % PROGRESS_STEPS == 0) {
                             // Notify and clean
@@ -213,7 +217,9 @@ public class ChoosePicturesFragment extends PreferenceFragment
             if (mSelectAll) {
                 Intent intent = new Intent(PreferencesProvider.ACTION_SETTINGS_CHANGED);
                 intent.putExtra(PreferencesProvider.EXTRA_FLAG_MEDIA_RELOAD, Boolean.TRUE);
-                getActivity().sendBroadcast(intent);
+                if (getActivity() != null) {
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+                }
                 mRecreateWorld = true;
             }
         }
@@ -259,6 +265,9 @@ public class ChoosePicturesFragment extends PreferenceFragment
                         album.getSelectedItems().add(f.getAbsolutePath());
                     }
                 }
+            }
+            if (album == null) {
+                return null;
             }
             if (mSelectAll) {
                 album.setSelected(true);
@@ -413,7 +422,9 @@ public class ChoosePicturesFragment extends PreferenceFragment
         if (mRecreateWorld) {
             intent.putExtra(PreferencesProvider.EXTRA_FLAG_RECREATE_WORLD, Boolean.TRUE);
         }
-        getActivity().sendBroadcast(intent);
+        if (getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+        }
 
         super.onDestroy();
     }
@@ -467,7 +478,7 @@ public class ChoosePicturesFragment extends PreferenceFragment
             updateEmptyMsg(AndroidHelper.hasReadExternalStoragePermissionGranted(getActivity()));
         }
 
-        mAlbumsPanel = (ListView)root.findViewById(R.id.albums_panel);
+        mAlbumsPanel = root.findViewById(R.id.albums_panel);
         mAlbumsPanel.setSmoothScrollbarEnabled(true);
         mAlbumsPanel.setEmptyView(mEmpty);
         mAlbumAdapter = new AlbumCardUiAdapter(getActivity(), mAlbums, this, this);
@@ -577,8 +588,12 @@ public class ChoosePicturesFragment extends PreferenceFragment
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.mnu_ok:
-                getActivity().finish();
-                return true;
+                if (getActivity() != null && !getActivity().isTaskRoot()) {
+                    getActivity().finish();
+                } else {
+                    getFragmentManager().popBackStack();
+                }
+                return super.onOptionsItemSelected(item);
             case R.id.mnu_restore:
                 restoreData();
                 return true;
@@ -592,6 +607,19 @@ public class ChoosePicturesFragment extends PreferenceFragment
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean onBackPressed() {
+        if (!mShowingAlbums) {
+            // Hide album pictures
+            hideAlbumPictures(mDstParent, mDstView, mSrcParent, mSrcView);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -635,8 +663,8 @@ public class ChoosePicturesFragment extends PreferenceFragment
 
     private void updateEmptyMsg(boolean hasStorageGrants) {
         if (mEmpty != null) {
-            TextView title = (TextView) mEmpty.findViewById(R.id.empty_title);
-            TextView msg = (TextView) mEmpty.findViewById(R.id.empty_msg);
+            TextView title = mEmpty.findViewById(R.id.empty_title);
+            TextView msg = mEmpty.findViewById(R.id.empty_msg);
             if (hasStorageGrants) {
                 title.setText(R.string.no_pictures_albums_found_msg);
                 msg.setText(R.string.no_pictures_albums_tap_to_refresh_msg);
@@ -763,19 +791,6 @@ public class ChoosePicturesFragment extends PreferenceFragment
     @Override
     public void onAllPicturesDeselected(Album album) {
         updateAllPicturesSelection(album, false);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean onBackPressed() {
-        if (!mShowingAlbums) {
-            // Hide album pictures
-            hideAlbumPictures(mDstParent, mDstView, mSrcParent, mSrcView);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -992,13 +1007,13 @@ public class ChoosePicturesFragment extends PreferenceFragment
     private void updateAlbumInfo(View v, Album album) {
         final Resources res = getResources();
 
-        AlbumInfoView info = (AlbumInfoView)v.findViewById(R.id.album_info);
+        AlbumInfoView info = v.findViewById(R.id.album_info);
         info.setAlbum(album);
 
-        ImageView icon = (ImageView)info.findViewById(R.id.album_thumbnail);
-        TextView name = (TextView)info.findViewById(R.id.album_name);
-        TextView items = (TextView)info.findViewById(R.id.album_items);
-        TextView selectedItems = (TextView)info.findViewById(R.id.album_selected_items);
+        ImageView icon = info.findViewById(R.id.album_thumbnail);
+        TextView name = info.findViewById(R.id.album_name);
+        TextView items = info.findViewById(R.id.album_items);
+        TextView selectedItems = info.findViewById(R.id.album_selected_items);
 
         icon.setImageDrawable(album.getIcon());
         name.setText(album.getName());
@@ -1039,6 +1054,9 @@ public class ChoosePicturesFragment extends PreferenceFragment
      */
     private void onHeaderPressed(AdapterView<?> parent, View view, int position) {
         mAlbum = mAlbumAdapter.getItem(position);
+        if (mAlbum == null) {
+            return;
+        }
         File path = new File(mAlbum.getPath());
         if (!path.exists()) {
             Toast.makeText(getActivity(),
@@ -1070,7 +1088,7 @@ public class ChoosePicturesFragment extends PreferenceFragment
         mContainer.addView(header);
 
         // Update and display the album pictures view
-        AlbumInfoView info = (AlbumInfoView)header.findViewById(R.id.album_info);
+        AlbumInfoView info = header.findViewById(R.id.album_info);
         info.addCallBackListener(ChoosePicturesFragment.this);
         info.setCastProxy(ChoosePicturesFragment.this);
         info.setAlbumMode(false);
@@ -1084,7 +1102,7 @@ public class ChoosePicturesFragment extends PreferenceFragment
      * @param view The picture view
      */
     private void onPicturePressed(View view) {
-        PictureItemView pictureView = (PictureItemView)view.findViewById(R.id.picture);
+        PictureItemView pictureView = view.findViewById(R.id.picture);
         if (pictureView != null) {
             Picture picture = pictureView.getPicture();
             onPictureChanged(picture);

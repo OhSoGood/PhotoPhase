@@ -28,6 +28,9 @@
     <string name="no_pictures_oops_msg">No pictures found</string>
     <string name="no_pictures_permission_required_msg">Permission required. Tap here.</string>
 
+    <!-- Wallpaper live preview -->
+    <string name="no_wallpaper_live_preview_activity_found">Can\'t open Wallpaper Live Preview</string>
+
     <!-- No albums message -->
     <string name="no_pictures_albums_found_msg">No albums found</string>
     <string name="no_pictures_albums_tap_to_refresh_msg">Tap to refresh</string>
@@ -75,6 +78,8 @@
     <string name="pref_general_aspect_ratio_correction_summary">Try to fix the picture\'s aspect ratio by cropping it to fit the destination frame</string>
     <string name="pref_general_frame_spacer">Frame spacer</string>
     <string name="pref_general_frame_spacer_summary">Add a bit of separation between frames</string>
+    <string name="pref_general_wallpaper_offset">Wallpaper offset</string>
+    <string name="pref_general_wallpaper_offset_summary">Adjust wallpaper offset to move across all your launcher drawer pages</string>
 
     <string name="pref_general_touch">Touch</string>
     <string name="pref_general_touch_mode">Touch mode</string>
@@ -111,6 +116,9 @@
     <string name="pref_media_random_title">Show images randomly</string>
     <string name="pref_media_random_summary_on">Images are displayed in a randomly sequence</string>
     <string name="pref_media_random_summary_off">Images are displayed in a sequential way</string>
+    <string name="pref_media_remember_last_title">Remember last image</string>
+    <string name="pref_media_remember_last_summary_on">The app will start showing the latest shown image</string>
+    <string name="pref_media_remember_last_summary_off">The app will start showing the first image in the queue</string>
     <string name="pref_media_pictures">Pictures</string>
     <string name="pref_media_albums">Albums</string>
     <string name="pref_media_albums_summary">Set the albums and pictures that will be displayed on the wallpaper</string>
@@ -187,11 +195,13 @@
     <string name="touch_actions_open">Open</string>
     <string name="touch_actions_share">Share</string>
     <string name="touch_actions_cast">Cast</string>
+    <string name="touch_actions_show_details">Show details</string>
     <string name="touch_actions_none_summary">Do nothing</string>
     <string name="touch_actions_transition_summary">Perform image transition</string>
     <string name="touch_actions_open_summary">Open the image</string>
     <string name="touch_actions_share_summary">Share the image</string>
     <string name="touch_actions_cast_summary">Cast the image</string>
+    <string name="touch_actions_show_details_summary">Show image details</string>
 
     <!-- Transitions -->
     <string name="transitions_cube">Cube</string>
@@ -238,6 +248,8 @@
     <string name="effects_swirl">Swirl</string>
     <string name="effects_dof">Deep of field</string>
     <string name="effects_warhol" translatable="false">Warhol</string>
+    <string name="effects_toon">Toon</string>
+    <string name="effects_sobel">Sobel</string>
 
     <!-- Borders -->
     <string name="borders_noborder">No border</string>
@@ -279,7 +291,7 @@
     <string name="photoviewer_details_name">Name: <xliff:g id="name" example="myphoto.jpg">%1$s</xliff:g></string>
     <string name="photoviewer_details_size">Size: <xliff:g id="size" example="234">%1$d</xliff:g> KB</string>
     <string name="photoviewer_details_resolution">Resolution: <xliff:g id="w" example="1024">%1$d</xliff:g>x<xliff:g id="h" example="678">%2$d</xliff:g></string>
-    <string name="photoviewer_details_orientation">Orientation: <xliff:g id="orientation" example="0">%1$s</xliff:g>\u00B0</string>
+    <string name="photoviewer_details_orientation">Orientation: <xliff:g id="orientation" example="0">%1$d</xliff:g>\u00B0</string>
     <string name="photoviewer_details_path">Path: <xliff:g id="path" example="/storage/emulated/0/photos">%1$s</xliff:g></string>
 
     <!-- Frame settings -->
@@ -295,6 +307,7 @@
     <string name="saved_dispositions_delete_success">Successfully deleted</string>
 
     <!-- Cast -->
+    <string name="cast_notification_channel" translatable="false">PhotoPhase - Cast</string>
     <string name="cast_app_description">Cast your photos</string>
     <string name="cast_loading_msg">Loading</string>
     <string name="cast_dialog_title">Send to</string>
@@ -308,4 +321,6 @@
     <string name="cast_shuffle">Shuffle</string>
     <string name="cast_repeat">Repeat</string>
     <string name="cast_stop">Stop</string>
+    <string name="cast_doze_warning_title">Doze mode</string>
+    <string name="cast_doze_warning_message">To prevent enter in Doze mode, and keep the slideshow running, just retain this activity in foreground.</string>
 </resources>

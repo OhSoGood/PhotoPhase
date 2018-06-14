@@ -34,10 +34,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.util.Log;
 
-import com.google.android.gms.gcm.GcmNetworkManager;
-import com.google.android.gms.gcm.OneoffTask;
-import com.google.android.gms.gcm.Task;
 import com.ruesga.android.wallpapers.photophase.AndroidHelper;
+import com.ruesga.android.wallpapers.photophase.BuildConfig;
 import com.ruesga.android.wallpapers.photophase.ICastService;
 import com.ruesga.android.wallpapers.photophase.MediaPictureDiscoverer;
 import com.ruesga.android.wallpapers.photophase.preferences.PreferencesProvider;
@@ -52,50 +50,36 @@ import java.util.Random;
 import fi.iki.elonen.NanoHTTPD;
 import su.litvak.chromecast.api.v2.ChromeCast;
 
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_CONNECTIVITY_CHANGED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_DEVICE_SELECTED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_LOADING_MEDIA;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_MEDIA_CHANGED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_MEDIA_COMMAND;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_ON_RELEASE_NETWORK;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_QUEUE_CHANGED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_SCAN_FINISHED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_SERVER_EXITED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.ACTION_SERVER_STOP;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.CAST_MODE_NONE;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.CAST_MODE_SINGLE;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.CAST_MODE_SLIDESHOW;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.COMMAND_NEXT;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.COMMAND_PAUSE;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.COMMAND_RESUME;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.COMMAND_STOP;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.EXTRA_COMMAND;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.EXTRA_DEVICE;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.EXTRA_IS_ERROR;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.EXTRA_PATH;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.EXTRA_ROUTED;
+import static com.ruesga.android.wallpapers.photophase.cast.CastServiceConstants.INVALID_COMMAND;
+
 public class CastService extends Service implements CastServer.CastServerEventListener {
     private static final String TAG = "CastService";
 
-    public static final String ACTION_DEVICE_SELECTED =
-            "com.ruesga.android.wallpapers.photophase.actions.CAST_DEVICE_SELECTED";
-    public static final String ACTION_CONNECTIVITY_CHANGED =
-            "com.ruesga.android.wallpapers.photophase.actions.CAST_CONNECTIVITY_CHANGED";
-    public static final String ACTION_MEDIA_COMMAND =
-            "com.ruesga.android.wallpapers.photophase.actions.CAST_MEDIA_COMMAND";
-
-    public static final String ACTION_ON_RELEASE_NETWORK =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_NETWORK_RELEASED";
-    public static final String ACTION_SCAN_FINISHED =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_SCAN_FINISHED";
-    public static final String ACTION_MEDIA_CHANGED =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_MEDIA_CHANGED";
-    public static final String ACTION_QUEUE_CHANGED =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_QUEUE_CHANGED";
-    public static final String ACTION_LOADING_MEDIA =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_LOADING_MEDIA";
-    public static final String ACTION_SERVER_STOP =
-            "com.ruesga.android.wallpapers.photophase.broadcast.SERVER_STOP";
-    public static final String ACTION_SERVER_EXITED =
-            "com.ruesga.android.wallpapers.photophase.broadcast.CAST_SERVER_EXITED";
-
-    public static final String EXTRA_PATH = "path";
-    public static final String EXTRA_DEVICE = "device";
-    public static final String EXTRA_IS_ERROR = "is_error";
-    public static final String EXTRA_ROUTED = "routed";
-    public static final String EXTRA_COMMAND = "command";
-
-    public static final int CAST_MODE_NONE = -1;
-    public static final int CAST_MODE_SINGLE = 0;
-    public static final int CAST_MODE_SLIDESHOW = 1;
-
-    public static final int INVALID_COMMAND = -1;
-    public static final int COMMAND_PAUSE = 0;
-    public static final int COMMAND_RESUME = 1;
-    public static final int COMMAND_NEXT = 2;
-    public static final int COMMAND_STOP = 3;
-
-    public static class CastStatusInfo {
-        public int mCastMode = CAST_MODE_NONE;
-        public boolean mPaused;
+    static class CastStatusInfo {
+        int mCastMode = CAST_MODE_NONE;
+        boolean mPaused;
     }
 
     private static final int MESSAGE_START_AND_CAST = 1;
@@ -113,15 +97,14 @@ public class CastService extends Service implements CastServer.CastServerEventLi
     private static final int MESSAGE_STOP = 13;
     private static final int MESSAGE_EXIT = 14;
 
-    private static final String CAST_SERVICE_TAG = "photophase-cast-slideshow";
-
     private CastServer mServer;
     private MediaPictureDiscoverer mMediaDiscoverer;
 
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundHandlerThread;
-    private GcmNetworkManager mGcmNetworkManager;
+    private ICastTaskManager mCastTaskManager;
     private boolean mInDozeMode = false;
+    private boolean mIsNewStart = false;
 
     private boolean mScanning;
     private boolean mHasNearDevices;
@@ -135,10 +118,10 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
     private final Handler.Callback mMessenger = new Handler.Callback() {
         @Override
+        @SuppressWarnings("unchecked")
         public boolean handleMessage(Message message) {
             switch (message.what) {
                 case MESSAGE_START_AND_CAST:
-                    //noinspection unchecked
                     Pair<String, String> o1 = (Pair<String, String>) message.obj;
                     startServerAndCastPath(o1.first, o1.second);
                     return true;
@@ -152,7 +135,6 @@ public class CastService extends Service implements CastServer.CastServerEventLi
                     return true;
 
                 case MESSAGE_SELECT_DEVICE:
-                    //noinspection unchecked
                     Pair<String, Boolean> o2 = (Pair<String, Boolean>) message.obj;
                     performSelectDevice(o2.first, o2.second);
                     return true;
@@ -378,11 +360,8 @@ public class CastService extends Service implements CastServer.CastServerEventLi
     public void onCreate() {
         super.onCreate();
         mRandom = new Random();
-        try {
-            mGcmNetworkManager = GcmNetworkManager.getInstance(this);
-        } catch (Exception ex) {
-            Log.e(TAG, "No Gcm network", ex);
-        }
+        mCastTaskManager = CastTaskManagerFactory.newCastTaskManager(BuildConfig.CAST_IMPL);
+        mCastTaskManager.instance(this);
 
         // Create a background messenger
         mBackgroundHandlerThread = new HandlerThread(TAG + "BackgroundThread");
@@ -390,10 +369,13 @@ public class CastService extends Service implements CastServer.CastServerEventLi
         mBackgroundHandler = new Handler(mBackgroundHandlerThread.getLooper(), mMessenger);
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(PreferencesProvider.ACTION_SETTINGS_CHANGED);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_SCREEN_ON);
         registerReceiver(mSettingsChanged, filter);
+
+        filter = new IntentFilter();
+        filter.addAction(PreferencesProvider.ACTION_SETTINGS_CHANGED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mSettingsChanged, filter);
 
         mMediaDiscoverer = new MediaPictureDiscoverer(this);
 
@@ -407,6 +389,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
         // Unregister receiver
         unregisterReceiver(mSettingsChanged);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mSettingsChanged);
 
         // Destroy the server
         cancelSlideShowAlarm();
@@ -490,7 +473,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
                 Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        mServer.stop();
+                        mServer.stop(false);
                         mServer = null;
                         Log.i(TAG, "Cast server was stopped");
                     }
@@ -504,6 +487,8 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
         Intent i = new Intent(ACTION_SERVER_EXITED);
         LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+
+        mIsNewStart = false;
     }
 
     private void performCast(String path) {
@@ -514,7 +499,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
             // It's a folder? Then obtain all the pictures, send the first one and enqueue th
             // rest ones
-            if (f.exists() && f.isDirectory()) {
+            if (f.isDirectory()) {
                 List<File> pictures = mMediaDiscoverer.obtain(f);
                 if (pictures.isEmpty()) {
                     return;
@@ -524,6 +509,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
                 cancelSlideShowAlarm();
 
                 // Enqueue and cast this
+                boolean newQueue = mIsNewStart && mQueue.isEmpty();
                 mQueue.clear();
                 mShuffleQueue.clear();
                 for (File pic : pictures) {
@@ -536,12 +522,22 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
                 mCastStatusInfo.mCastMode = CAST_MODE_SLIDESHOW;
                 mServer.send(chooseNextPicture());
+                mIsNewStart = false;
                 sendLoadingStatus();
                 mQueuePointer = 0;
-            } else {
+
+                // If we can't use the GCM network (and we needed to bypass Doze) and
+                // its the first time
+                if (newQueue && AndroidHelper.isMarshmallowOrGreater()
+                        && !mCastTaskManager.canNetworkSchedule()) {
+                    // Open the queue activity so we can held the screen off
+                    startPhotoQueueActivity();
+                }
+            } else if (f.isFile()) {
                 cancelSlideShowAlarm();
                 mCastStatusInfo.mCastMode = CAST_MODE_SINGLE;
                 mServer.send(path);
+                mIsNewStart = false;
                 sendLoadingStatus();
             }
         } catch (Exception ex) {
@@ -553,10 +549,11 @@ public class CastService extends Service implements CastServer.CastServerEventLi
         Log.d(TAG, "Enqueue " + path);
 
         File f = new File(path);
+        boolean newQueue = mIsNewStart && mQueue.isEmpty();
 
         // It's a folder? Then obtain all the pictures, send the first one and enqueue the
         // rest ones
-        if (f.exists() && f.isDirectory()) {
+        if (f.isDirectory()) {
             List<File> pictures = mMediaDiscoverer.obtain(f);
             if (pictures.isEmpty()) {
                 return;
@@ -569,7 +566,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
                     mShuffleQueue.add(p);
                 }
             }
-        } else {
+        } else if (f.isFile()) {
             String p = f.getAbsolutePath();
             if (!mQueue.contains(p)) {
                 mQueue.add(p);
@@ -577,6 +574,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
             }
         }
 
+        mIsNewStart = false;
         if (mCastStatusInfo.mCastMode != CAST_MODE_SLIDESHOW) {
             final String p = chooseNextPicture();
             try {
@@ -586,6 +584,14 @@ public class CastService extends Service implements CastServer.CastServerEventLi
                 sendLoadingStatus();
             } catch (Exception ex) {
                 Log.e(TAG, "Cannot send picture to device: " + p, ex);
+            }
+
+            // If we can't use the GCM network (and we needed to bypass Doze) and
+            // its the first time
+            if (newQueue && AndroidHelper.isMarshmallowOrGreater()
+                    && !mCastTaskManager.canNetworkSchedule()) {
+                // Open the queue activity so we can held the screen off
+                startPhotoQueueActivity();
             }
         }
 
@@ -736,11 +742,11 @@ public class CastService extends Service implements CastServer.CastServerEventLi
             return;
         }
 
-        if (!CastUtils.hasValidCastNetwork(this)) {
+        /*if (!CastUtils.hasValidCastNetwork(this)) {
             mHasNearDevices = false;
             stopSelfAndServer();
             return;
-        }
+        }*/
 
         // Check if at least one devices is listening
         mScanning = true;
@@ -952,6 +958,14 @@ public class CastService extends Service implements CastServer.CastServerEventLi
 
     @Override
     public void onCastServerDisconnected() {
+        mCastStatusInfo.mCastMode = CAST_MODE_NONE;
+        cancelSlideShowAlarm();
+        Intent i = new Intent(ACTION_SERVER_EXITED);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+        mIsNewStart = false;
+
+        stopForeground(true);
+        stopSelf();
         mServer = null;
         Log.i(TAG, "Cast server was disconnected");
     }
@@ -989,7 +1003,7 @@ public class CastService extends Service implements CastServer.CastServerEventLi
             return;
         }
 
-        if (!mInDozeMode) {
+        if (!mInDozeMode || !mCastTaskManager.canNetworkSchedule()) {
             // AlarmManager
             Intent i = new Intent(this, CastService.class);
             i.setAction(ACTION_MEDIA_COMMAND);
@@ -1010,14 +1024,8 @@ public class CastService extends Service implements CastServer.CastServerEventLi
         } else {
             // Gcm
             long time = Cast.getSlideshowTime(this);
-            if (mGcmNetworkManager != null) {
-                OneoffTask task = new OneoffTask.Builder()
-                        .setService(CastGcmTaskService.class)
-                        .setTag(CAST_SERVICE_TAG)
-                        .setExecutionWindow(time - 1, time)
-                        .setRequiredNetwork(Task.NETWORK_STATE_UNMETERED)
-                        .build();
-                mGcmNetworkManager.schedule(task);
+            if (mCastTaskManager.canNetworkSchedule()) {
+                mCastTaskManager.schedule(time);
             }
         }
     }
@@ -1032,8 +1040,8 @@ public class CastService extends Service implements CastServer.CastServerEventLi
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         am.cancel(pi);
 
-        if (mGcmNetworkManager != null) {
-            mGcmNetworkManager.cancelAllTasks(CastGcmTaskService.class);
+        if (mCastTaskManager.canNetworkSchedule()) {
+            mCastTaskManager.cancelTasks();
         }
     }
 
@@ -1055,6 +1063,8 @@ public class CastService extends Service implements CastServer.CastServerEventLi
         CastServer castServer = new CastServer(this, device, this);
         castServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
         mServer = castServer;
+
+        mIsNewStart = true;
     }
 
     private void checkAndRestoreServerStatusIfNeeded() {
@@ -1070,5 +1080,20 @@ public class CastService extends Service implements CastServer.CastServerEventLi
     private void sendLoadingStatus() {
         Intent i = new Intent(ACTION_LOADING_MEDIA);
         LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void startPhotoQueueActivity() {
+        Intent i = new Intent(this, CastPhotoQueueActivity.class);
+        i.putExtra(CastPhotoQueueActivity.EXTRA_SHOW_DOZE_WARNING,
+                PreferencesProvider.Preferences.Cast.isShowDozeModeWarning(this));
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_NO_HISTORY
+                | (AndroidHelper.isLollipopOrGreater()
+                    ? Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+                    : Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET));
+        startActivity(i);
     }
 }

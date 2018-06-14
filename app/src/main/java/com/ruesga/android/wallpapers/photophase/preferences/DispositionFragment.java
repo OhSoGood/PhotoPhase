@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.support.annotation.NonNull;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.LayoutInflater;
@@ -172,11 +173,11 @@ public abstract class DispositionFragment extends PreferenceFragment
         mCurrentPage = 0;
         mNumberOfTemplates = getDispositionsTemplates().length;
 
-        mAdvise = (TextView)v.findViewById(R.id.advise);
-        mResizeFrame = (ResizeFrame)v.findViewById(R.id.resize_frame);
+        mAdvise = v.findViewById(R.id.advise);
+        mResizeFrame = v.findViewById(R.id.resize_frame);
 
         mAdapter = new DispositionAdapter(getActivity(), getAllDispositions(), mResizeFrame, this);
-        mPager = (ViewPager) v.findViewById(R.id.dispositions_pager);
+        mPager = v.findViewById(R.id.dispositions_pager);
         mPager.setAdapter(mAdapter);
         mPager.addOnPageChangeListener(this);
         mPager.setCurrentItem(0);
@@ -209,7 +210,9 @@ public abstract class DispositionFragment extends PreferenceFragment
                     intent.putExtra(PreferencesProvider.EXTRA_FLAG_REDRAW, Boolean.TRUE);
                     intent.putExtra(PreferencesProvider.EXTRA_FLAG_RECREATE_WORLD, Boolean.TRUE);
                 }
-                getActivity().sendBroadcast(intent);
+                if (getActivity() != null) {
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+                }
             }
         }
 
@@ -236,8 +239,12 @@ public abstract class DispositionFragment extends PreferenceFragment
         switch (item.getItemId()) {
             case R.id.mnu_ok:
                 mOkPressed = true;
-                getActivity().finish();
-                return true;
+                if (getActivity() != null && !getActivity().isTaskRoot()) {
+                    getActivity().finish();
+                } else {
+                    getFragmentManager().popBackStack();
+                }
+                return super.onOptionsItemSelected(item);
             case R.id.mnu_restore:
                 restoreData();
                 return true;

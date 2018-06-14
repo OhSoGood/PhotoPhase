@@ -17,6 +17,7 @@
 package com.ruesga.android.wallpapers.photophase;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -205,6 +206,7 @@ public final class AndroidHelper {
         return new Pair<>(labels, values);
     }
 
+    @SuppressLint("PrivateApi")
     public static void tryRegisterActivityDestroyListener(
             PreferenceManager pm, PreferenceManager.OnActivityDestroyListener listener) {
         try {
@@ -236,11 +238,11 @@ public final class AndroidHelper {
         return intent;
     }
 
+    @SuppressWarnings("deprecation")
     public static Locale getLocale(Resources res) {
         if (isNougatOrGreater()) {
             return res.getConfiguration().getLocales().get(0);
         }
-        //noinspection deprecation
         return res.getConfiguration().locale;
     }
 

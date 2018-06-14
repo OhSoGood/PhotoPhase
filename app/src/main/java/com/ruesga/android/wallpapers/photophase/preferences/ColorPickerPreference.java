@@ -83,10 +83,10 @@ public class ColorPickerPreference extends DialogPreference {
 
             LayoutInflater inflater = LayoutInflater.from(getContext());
             View v = inflater.inflate(R.layout.color_picker_pref_dialog_view, this, false);
-            mColorText = (EditText) v.findViewById(R.id.color_picker_pref_color_text);
-            mColorPicker = (ColorPickerView) v.findViewById(R.id.color_picker_pref_color_picker);
-            mCurrentColor = (ColorPanelView) v.findViewById(R.id.color_picker_pref_color_current);
-            mNewColor = (ColorPanelView) v.findViewById(R.id.color_picker_pref_color_new);
+            mColorText = v.findViewById(R.id.color_picker_pref_color_text);
+            mColorPicker = v.findViewById(R.id.color_picker_pref_color_picker);
+            mCurrentColor = v.findViewById(R.id.color_picker_pref_color_current);
+            mNewColor = v.findViewById(R.id.color_picker_pref_color_new);
 
             // Configure the color picker with alpha slider
             mColorPicker.setAlphaSliderVisible(true);
@@ -184,7 +184,7 @@ public class ColorPickerPreference extends DialogPreference {
             if (!mIgnoreTextChanged && s.length() == 8) {
                 try {
                     setColor(Color.parseColor("#" + s.toString()), true);
-                } catch (Exception e) {/**NON BLOCK**/}
+                } catch (Exception e) {/*NON BLOCK*/}
             }
         }
     }
@@ -288,8 +288,10 @@ public class ColorPickerPreference extends DialogPreference {
         onPrepareDialogBuilderCompat(builder);
         AndroidHelper.tryRegisterActivityDestroyListener(getPreferenceManager(), this);
         mDialog = builder.create();
-        mDialog.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        if (mDialog.getWindow() != null) {
+            mDialog.getWindow().setSoftInputMode(
+                    WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        }
         mDialog.setOnDismissListener(this);
         if (state != null) {
             mDialog.onRestoreInstanceState(state);

@@ -42,6 +42,7 @@ public class PhotoPhasePreferences extends AppCompatPreferenceActivity {
 
     private OnBackPressedListener mCallback;
     private Header mAboutHeader;
+    private int fragmentCount = 1;
 
     /**
      * {@inheritDoc}
@@ -119,15 +120,20 @@ public class PhotoPhasePreferences extends AppCompatPreferenceActivity {
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-       switch (item.getItemId()) {
-          case android.R.id.home:
-              if (mCallback == null || !mCallback.onBackPressed()) {
-                  finish();
-              }
-              return true;
-          default:
-             return super.onOptionsItemSelected(item);
-       }
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                fragmentCount--;
+                boolean isBackPressed = mCallback != null && mCallback.onBackPressed();
+                if ((fragmentCount == 0 || !isTaskRoot())
+                        && (mCallback == null || !isBackPressed)) {
+                    finish();
+                    return true;
+                }
+                if (isBackPressed) {
+                    return true;
+                }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -136,10 +142,16 @@ public class PhotoPhasePreferences extends AppCompatPreferenceActivity {
     @Override
     public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (mCallback == null || !mCallback.onBackPressed()) {
+            fragmentCount--;
+            boolean isBackPressed = mCallback != null && mCallback.onBackPressed();
+            if ((fragmentCount == 0 || !isTaskRoot())
+                    && (mCallback == null || !isBackPressed)) {
                 finish();
+                return true;
             }
-            return true;
+            if (isBackPressed) {
+                return true;
+            }
         }
         return super.onKeyUp(keyCode, event);
     }
@@ -150,6 +162,7 @@ public class PhotoPhasePreferences extends AppCompatPreferenceActivity {
     @Override
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
+        fragmentCount++;
         if (fragment instanceof OnBackPressedListener) {
             mCallback = (OnBackPressedListener)fragment;
         } else {
@@ -157,11 +170,19 @@ public class PhotoPhasePreferences extends AppCompatPreferenceActivity {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public boolean isValidFragment(String fragmentName) {
-        return true;
+    protected boolean isValidFragment(String fragmentName) {
+        return ChoosePicturesFragment.class.getName().equals(fragmentName)
+                || DispositionFragment.class.getName().equals(fragmentName)
+                || LayoutPreferenceFragment.class.getName().equals(fragmentName)
+                || GeneralPreferenceFragment.class.getName().equals(fragmentName)
+                || MediaPreferenceFragment.class.getName().equals(fragmentName)
+                || CastPreferenceFragment.class.getName().equals(fragmentName)
+                || LivePreviewFragment.class.getName().equals(fragmentName)
+                || LiveTransitionsPreviewFragment.class.getName().equals(fragmentName)
+                || LiveEffectsPreviewFragment.class.getName().equals(fragmentName)
+                || LiveBordersPreviewFragment.class.getName().equals(fragmentName)
+                || PortraitDispositionFragment.class.getName().equals(fragmentName)
+                || LandscapeDispositionFragment.class.getName().equals(fragmentName);
     }
 }

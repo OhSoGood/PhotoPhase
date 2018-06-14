@@ -43,6 +43,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -134,7 +135,7 @@ public class CastServer extends NanoHTTPD {
             } else if (data instanceof Close) {
                 Close ev = (Close) data;
                 if (!ev.requestedBySender) {
-                    stop();
+                    stop(true);
                     mCastServerEventListener.onCastServerDisconnected();
                 }
             }
@@ -228,7 +229,7 @@ public class CastServer extends NanoHTTPD {
             mDaemon = daemon;
             super.start(timeout, daemon);
         } catch (IOException ex) {
-            stop();
+            stop(false);
             throw ex;
         }
 
@@ -236,7 +237,7 @@ public class CastServer extends NanoHTTPD {
         mIsConnected = true;
     }
 
-    protected boolean send(String path) throws IOException {
+    protected void send(String path) throws IOException {
         File f = new File(path);
         if (!f.isFile()) {
             throw new IOException("Argument is not a file");
@@ -266,7 +267,6 @@ public class CastServer extends NanoHTTPD {
         CastMessages.Cast cast = new CastMessages.Cast(url, token, name, album, r.width(), r.height());
         printRequestMessage(cast);
         mChromecast.send(PHOTOPHASE_NAMESPACE, cast);
-        return true;
     }
 
     protected void sendConfiguration() throws IOException {
@@ -296,19 +296,20 @@ public class CastServer extends NanoHTTPD {
         setCurrentlyPlaying(null, false, null);
     }
 
-    @Override
-    public void stop() {
+    public void stop(boolean closed) {
         if (!mIsConnected) {
             return;
         }
 
         // Stop the chromecast
-        try {
-            if (mChromecast.isAppRunning(PHOTOPHASE_APP_ID)) {
-                mChromecast.stopApp();
+        if (!closed) {
+            try {
+                if (mChromecast.isAppRunning(PHOTOPHASE_APP_ID)) {
+                    mChromecast.stopApp();
+                }
+            } catch (Exception ex) {
+                // Ignore
             }
-        } catch (Exception ex) {
-            // Ignore
         }
         try {
             mChromecast.unregisterListener(mCastEventListener);
@@ -325,7 +326,7 @@ public class CastServer extends NanoHTTPD {
 
     private void reconnect() throws IOException {
         // Restart the server
-        stop();
+        stop(false);
         start(mTimeout, mDaemon);
     }
 
@@ -336,10 +337,10 @@ public class CastServer extends NanoHTTPD {
     }
 
     @Override
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions"})
     public synchronized Response serve(IHTTPSession session) {
         // Acquire a wakelock while serving the file
-        mCpuWakeLock.acquire();
+        mCpuWakeLock.acquire(45000L);
 
         // We only allow request coming from the ChromeCast device we bound to
         if (!isAuthorized(session.getRemoteIpAddress())) {
@@ -347,14 +348,14 @@ public class CastServer extends NanoHTTPD {
         }
 
         // Check we received a valid request before serve it
-        Map<String, String> params = session.getParms();
+        final Map<String, List<String>> params = session.getParameters();
         if (!params.containsKey(HASH_KEY)) {
             return createFailureResponse(Response.Status.BAD_REQUEST);
         }
-        if (TextUtils.isEmpty(params.get(HASH_KEY))) {
+        final String hash = params.isEmpty() ? null : params.get(HASH_KEY).get(0);
+        if (TextUtils.isEmpty(hash)) {
             return createFailureResponse(Response.Status.BAD_REQUEST);
         }
-        String hash = params.get(HASH_KEY);
         if (!mRequests.containsKey(hash)) {
             return createFailureResponse(Response.Status.FORBIDDEN);
         }
@@ -379,7 +380,7 @@ public class CastServer extends NanoHTTPD {
                 long start = System.currentTimeMillis();
                 Rect r = BitmapUtils.getBitmapDimensions(f);
                 BitmapUtils.adjustRectToMinimumSize(r, BitmapUtils.calculateMaxAvailableSize(mContext));
-                Bitmap src = BitmapUtils.createUnscaledBitmap(f, r.width(), r.height());
+                Bitmap src = BitmapUtils.createUnscaledBitmap(f, r.width(), r.height(), 1);
                 try {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     src.compress(Bitmap.CompressFormat.WEBP, 60, out);

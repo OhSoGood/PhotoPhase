@@ -16,6 +16,7 @@
 
 package com.ruesga.android.wallpapers.photophase.widgets;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +24,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask.Status;
 import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -96,7 +96,7 @@ public class PictureItemView extends FrameLayout {
     private boolean mInEditMode;
     private boolean mLongClickFired;
 
-    private DisplayMetrics mMetrics;
+    private int mSize;
 
     /**
      * Constructor of <code>PictureItemView</code>.
@@ -140,9 +140,11 @@ public class PictureItemView extends FrameLayout {
     private void init() {
         mCallbacks = new ArrayList<>();
 
-        mMetrics = new DisplayMetrics();
+        DisplayMetrics metrics = new DisplayMetrics();
         WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        wm.getDefaultDisplay().getMetrics(mMetrics);
+        wm.getDefaultDisplay().getMetrics(metrics);
+        mSize = metrics.widthPixels /
+                getResources().getInteger(R.integer.pictures_per_album);
 
         mScaleInAnimation = new ScaleAnimation(
                 1f, 0.98f, 1f, 0.98f,
@@ -175,9 +177,10 @@ public class PictureItemView extends FrameLayout {
 
         setOnTouchListener(new OnTouchListener() {
             @Override
+            @SuppressLint("ClickableViewAccessibility")
             public boolean onTouch(View v, MotionEvent event) {
                 if (!mInEditMode) {
-                    final int action = MotionEventCompat.getActionMasked(event);
+                    final int action = event.getAction();
                     switch (action) {
                         case MotionEvent.ACTION_DOWN:
                             mLongClickFired = false;
@@ -269,10 +272,10 @@ public class PictureItemView extends FrameLayout {
 
         // Retrieve the views references
         if (mIcon == null) {
-            mIcon = (ImageView) findViewById(R.id.photo);
+            mIcon = findViewById(R.id.photo);
         }
         if (mCheckbox == null) {
-            mCheckbox = (CheckBox) findViewById(R.id.picture_selector);
+            mCheckbox = findViewById(R.id.picture_selector);
         }
         if (mExpand == null) {
             mExpand = findViewById(R.id.picture_expand);
@@ -310,7 +313,7 @@ public class PictureItemView extends FrameLayout {
                 // Show as icon, the first picture
                 File f = new File(picture.getPath());
                 AsyncPictureLoaderTask task = new AsyncPictureLoaderTask(getContext(), mIcon,
-                        mMetrics.widthPixels, mMetrics.heightPixels, new OnPictureLoaded() {
+                        mSize, mSize, 2, new OnPictureLoaded() {
                     @Override
                     public void onPictureLoaded(Object o, Drawable drawable) {
                         if (AndroidHelper.isHighEndDevice(getContext())) {
@@ -320,7 +323,7 @@ public class PictureItemView extends FrameLayout {
                         }
                     }
                 });
-                task.mFactor = 8;
+                task.mFactor = 1;
                 mTask = new AsyncPictureLoaderRunnable(task, f);
                 ViewCompat.postOnAnimation(this, mTask);
             }

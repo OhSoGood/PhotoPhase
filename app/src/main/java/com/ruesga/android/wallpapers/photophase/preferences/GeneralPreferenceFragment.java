@@ -33,8 +33,10 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceFragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.util.Pair;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.ruesga.android.wallpapers.photophase.AndroidHelper;
 import com.ruesga.android.wallpapers.photophase.Colors;
@@ -87,6 +89,8 @@ public class GeneralPreferenceFragment extends PreferenceFragment {
                 mEmptyTextureQueueFlag = true;
             } else if (key.compareTo("ui_frame_spacer") == 0) {
                 mRecreateWorld = true;
+            } else if (key.compareTo("ui_wallpaper_offset") == 0) {
+                mRedrawFlag = true;
             } else if (key.compareTo("ui_transition_types") == 0) {
                 mRedrawFlag = true;
                 Preferences.General.Transitions.setSelectedTransitions(
@@ -142,7 +146,9 @@ public class GeneralPreferenceFragment extends PreferenceFragment {
         if (mRecreateWorld) {
             intent.putExtra(PreferencesProvider.EXTRA_FLAG_RECREATE_WORLD, Boolean.TRUE);
         }
-        getActivity().sendBroadcast(intent);
+        if (getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+        }
     }
 
     @Override
@@ -198,20 +204,25 @@ public class GeneralPreferenceFragment extends PreferenceFragment {
         mSetAsWallpaper.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Intent i;
-                if (AndroidHelper.isJellyBeanOrGreater()) {
-                    try {
-                        i = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
-                        i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                                new ComponentName(getActivity(), PhotoPhaseWallpaper.class));
-                        startActivity(i);
-                    } catch (ActivityNotFoundException ex) {
+                try {
+                    Intent i;
+                    if (AndroidHelper.isJellyBeanOrGreater()) {
+                        try {
+                            i = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
+                            i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                                    new ComponentName(getActivity(), PhotoPhaseWallpaper.class));
+                            startActivity(i);
+                        } catch (ActivityNotFoundException ex) {
+                            i = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
+                            startActivity(i);
+                        }
+                    } else {
                         i = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
                         startActivity(i);
                     }
-                } else {
-                    i = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
-                    startActivity(i);
+                } catch (ActivityNotFoundException ex) {
+                    Toast.makeText(getActivity(), R.string.no_wallpaper_live_preview_activity_found,
+                            Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -259,6 +270,10 @@ public class GeneralPreferenceFragment extends PreferenceFragment {
         CheckBoxPreference frameSpacer =
                 (CheckBoxPreference) findPreference("ui_frame_spacer");
         frameSpacer.setOnPreferenceChangeListener(mOnChangeListener);
+
+        CheckBoxPreference wallpaperOffset =
+                (CheckBoxPreference) findPreference("ui_wallpaper_offset");
+        wallpaperOffset.setOnPreferenceChangeListener(mOnChangeListener);
 
         mTransitionsTypes = (MultiSelectListPreference) findPreference("ui_transition_types");
         Pair<String[], String[]> entries = AndroidHelper.sortEntries(

@@ -26,7 +26,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.media.ExifInterface;
+import android.support.media.ExifInterface;
 
 import com.ruesga.android.wallpapers.photophase.AndroidHelper;
 
@@ -95,7 +95,7 @@ public class BitmapUtils {
         BitmapFactory.decodeFile(file.getAbsolutePath(), options);
 
         // Decode the bitmap with inSampleSize set
-        options.inSampleSize = calculateBitmapRatio(options, dstWidth, dstHeight);
+        options.inSampleSize = Math.min(1, calculateBitmapRatio(options, dstWidth, dstHeight));
         options.inJustDecodeBounds = false;
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
         if (bitmap == null) {
@@ -104,7 +104,7 @@ public class BitmapUtils {
 
         // Test if the bitmap has exif format, and decode properly
         Bitmap out = decodeExifBitmap(file, bitmap);
-        if (!out.equals(bitmap)) {
+        if (out != null && !out.equals(bitmap)) {
             bitmap.recycle();
         }
         return out;
@@ -133,7 +133,8 @@ public class BitmapUtils {
      * @return Decoded bitmap
      */
     @SuppressWarnings("deprecation")
-    public static Bitmap createUnscaledBitmap(File file, int dstWidth, int dstHeight) {
+    public static Bitmap createUnscaledBitmap(File file, int dstWidth, int dstHeight,
+            int minSampleSize) {
         // Get the dimensions of the bitmap
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
@@ -152,9 +153,9 @@ public class BitmapUtils {
 
         // Decode the image file into a Bitmap sized to fill the view
         options.inJustDecodeBounds = false;
-        options.inSampleSize = Math.max(Math.round(photoWidth / dstWidth),
-                Math.round(photoHeight / dstHeight));
-        return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        options.inSampleSize = Math.max(minSampleSize, Math.max(Math.round(photoWidth / dstWidth),
+                Math.round(photoHeight / dstHeight)));
+        return decodeExifBitmap(file, BitmapFactory.decodeFile(file.getAbsolutePath(), options));
     }
 
     /**
@@ -190,32 +191,34 @@ public class BitmapUtils {
      * @return Bitmap The decoded bitmap
      */
     private static Bitmap decodeExifBitmap(File file, Bitmap src) {
-        try {
-            // Try to load the bitmap as a bitmap file
-            ExifInterface exif = new ExifInterface(file.getAbsolutePath());
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-            if (orientation == ExifInterface.ORIENTATION_UNDEFINED
-                    || orientation == ExifInterface.ORIENTATION_NORMAL) {
-                return src;
+        if (src != null) {
+            try {
+                // Try to load the bitmap as a bitmap file
+                ExifInterface exif = new ExifInterface(file.getAbsolutePath());
+                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+                if (orientation == ExifInterface.ORIENTATION_UNDEFINED
+                        || orientation == ExifInterface.ORIENTATION_NORMAL) {
+                    return src;
+                }
+                Matrix matrix = new Matrix();
+                if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                    matrix.postRotate(90);
+                } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                    matrix.postRotate(180);
+                } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                    matrix.postRotate(270);
+                } else if (orientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL) {
+                    matrix.setScale(-1, 1);
+                    matrix.postTranslate(src.getWidth(), 0);
+                } else if (orientation == ExifInterface.ORIENTATION_FLIP_VERTICAL) {
+                    matrix.setScale(1, -1);
+                    matrix.postTranslate(0, src.getHeight());
+                }
+                // Rotate the bitmap
+                return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
+            } catch (IOException e) {
+                // Ignore
             }
-            Matrix matrix = new Matrix();
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
-                matrix.postRotate(90);
-            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
-                matrix.postRotate(180);
-            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-                matrix.postRotate(270);
-            } else if (orientation == ExifInterface.ORIENTATION_FLIP_HORIZONTAL) {
-                matrix.setScale(-1, 1);
-                matrix.postTranslate(src.getWidth(), 0);
-            } else if (orientation == ExifInterface.ORIENTATION_FLIP_VERTICAL) {
-                matrix.setScale(1, -1);
-                matrix.postTranslate(0, src.getHeight());
-            }
-            // Rotate the bitmap
-            return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
-        } catch (IOException e) {
-            // Ignore
         }
         return src;
     }
